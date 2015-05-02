@@ -1,0 +1,27 @@
+{
+  "name": "meetsites",
+  "version": "1.0.0",
+  "description": "MeetSites web app",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ankursanghi/meetsites.git"
+  },
+  "keywords": [
+    "meetsites",
+    "\"reservation",
+    "management\""
+  ],
+  "author": "Ankur Sanghi",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ankursanghi/meetsites/issues"
+  },
+  "homepage": "https://github.com/ankursanghi/meetsites",
+  "dependencies": {
+    "express": "^4.12.3"
+  }
+}
