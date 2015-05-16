@@ -18,6 +18,7 @@ return;
 // Authorize a client with the loaded credentials, then call the Calendar API.
 authorize(JSON.parse(content), getEvents);
 });
+
 /**
 * Create an OAuth2 client with the given credentials, and then execute the
 * given callback function.
