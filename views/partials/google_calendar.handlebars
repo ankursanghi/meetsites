@@ -15,8 +15,15 @@
 					</tr>
 				</thead>
 				<tbody>
-					{{#each event.
+					{{#each partials.calResponse}}
+						<tr>
+							<td>{{this.start.dateTime}}</td>
+							<td>{{this.summary}}</td>
+							<td></td>
+						</tr>
+					{{/each}}
 				</tbody>
+			</table>
 		</div>
 	</div>
 </div>

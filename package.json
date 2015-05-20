@@ -25,7 +25,8 @@
     "express-handlebars": "^2.0.1",
     "google-auth-library": "^0.9.5",
     "googleapis": "^2.0.3",
-    "handlebars": "^3.0.2"
+    "handlebars": "^3.0.2",
+    "q": "^1.4.1"
   },
   "devDependencies": {
     "chai": "^2.3.0",
