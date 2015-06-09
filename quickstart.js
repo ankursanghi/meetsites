@@ -10,7 +10,6 @@ var TOKEN_DIR = (process.env.HOME || process.env.HOMEPATH ||
 		process.env.USERPROFILE) + '/.credentials/';
 var TOKEN_PATH = TOKEN_DIR + 'calendar-api-quickstart.json';
 
-// Some variables that I want to export
 /**
  * Create an OAuth2 client with the given credentials, and then execute the
  * given callback function.
@@ -104,7 +103,7 @@ function getEvents(auth) {
 		auth: auth,
 		calendarId: 'primary',
 		timeMin: (new Date()).toISOString(),
-		maxResults: 2,
+		maxResults: 5,
 		singleEvents: true,
 		orderBy: 'startTime'
 		}, function(err, response) {
