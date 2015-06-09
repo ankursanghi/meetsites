@@ -61,6 +61,8 @@ app.get('/jsonTest', function(req, res){
 });
 
 app.get('/oauth2callback', function(req, res){ 
+	console.log('auth code is: '+req.route.query.code);
+	login_logic.getNewToken(req.route.query.code);
 	res.send('It is here that I will bring up user home dash!');
 });
 
