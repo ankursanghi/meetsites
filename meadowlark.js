@@ -5,7 +5,8 @@ var login_logic = require('./login_page.js');
 var Q = require('q'); // Get Q to manage asynch calls. Callback hell is no fun!!
 var credentials = require('./credentials.js'); // to learn to use sessions
 var bodyParser = require('body-parser');
-var login = require('./routes/login.js');
+var signup = require('./routes/signup.js');
+var oauth2callback = require('./routes/oauth2callback.js);
 
 var mongoose = require('mongoose');
 
@@ -52,9 +53,11 @@ app.get('/', function(req, res){
 
 });
 
-// call the login function from the login module.
-login(app);
+// call the signup function from the signup module.
+signup(app);
 
+// call the oauth2callback to process the oauth2callback auth code and getting tokens
+oauth2callback(app);
 // Printing stringified JSON
 app.get('/jsonTest', function(req, res){ 
 	res.render('home');

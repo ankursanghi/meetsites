@@ -5,6 +5,12 @@ var userSchema = mongoose.Schema({
     	name: {first: String, last: String},
     	salt: {type: String, required: true},
     	hash: {type: String, required: true},
+    	token: {
+		access_token: {type: String},
+    		refresh_token: {type: String},
+    		token_type: {type: String},
+    		expiry_date: {type: String},
+	}
     	access_token: String,
     	refresh_token: String,
 });

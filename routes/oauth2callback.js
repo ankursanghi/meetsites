@@ -12,7 +12,7 @@ var opts = {
 		 }
 };
 
-module.exports=function(app){
+module.exports=function(app, token){
 	switch(app.get('env')){ 
 		case 'development':
 			mongoose.connect(credentials.mongo.development.connectionString, opts);
@@ -28,47 +28,22 @@ module.exports=function(app){
 	};
 	// Login page here
 	app.get('/oauth2callback', function(req, res){ 
-		// Call a function to get redirect URL to authorize user's Google credentials
-		//	googleCalendar.getRedirURL(res).then(function(url){
-		// Use the 301 redirect to send to the authorization URL
-		// This authorization URL already has a redirect URL passed into it
-		// Google auth URL redirects back to it.
+		// this URL is called when Google oAuth2 returns with an auth code, and auth code 
+		// needs to be exchanged for tokens
+		// these tokens then need to be saved in the database along with the user details
 		if (req.session.isLoggedIn){
 			console.log('inside the logic to save access and refresh tokens');
-		}
-	});
-
-	//create a new account
-	app.post('/login', function(req,res,next){
-		var firstName = req.body.firstname;
-		var lastName = req.body.lastname;
-		var email = req.body.email;
-		var passwd = req.body.pwd;
-		function invalid (){
-			res.render('login_form', {invalid: true});
-			var user = {_id: req.session.user};
-			// user.access_token = req.
-		}
-		console.log("name:"+firstName+" "+lastName+" "+email);
-		if (!(email && passwd)) return invalid();
-		// TODO: add logic to check if this user already exists, and show login page instead of sign-up page with an alert that the user may have forgotten pwd
-		crypto.randomBytes(16, function(err, bytes){
-			if (err) return next(err);
-			var user = {_id: email};
-			user.salt = bytes.toString('utf8');
-			user.hash = hash(passwd, user.salt);
-			User.create(user, function(err, newUser){
+			var query = {_id: req.session.user};
+			var user ={};
+			var options = {upsert: true};
+			user.token = token;
+			User.findOneAndUpdate(query, user, options, function(err, doc){
 				if (err){
-					if(err instanceof mongoose.Error.ValidationError) {
-						return invalid();
-					}
+					console.log("received an error while updating the user with tokens");
 					return next(err);
 				}
 			});
-			req.session.isLoggedIn = true;
-			req.session.user = email;
-			console.log('created user: %s',email);
-			return signupGoogle.presentNewTokenSignup(res);
-		});
+		}
 	});
+
 }
