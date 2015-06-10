@@ -11,8 +11,6 @@ var userSchema = mongoose.Schema({
     		token_type: {type: String},
     		expiry_date: {type: String},
 	}
-    	access_token: String,
-    	refresh_token: String,
 });
 
 userSchema.methods.testMethod = function(){
