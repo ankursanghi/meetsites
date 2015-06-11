@@ -56,19 +56,20 @@ app.get('/', function(req, res){
 // call the signup function from the signup module.
 signup(app);
 
-// call the oauth2callback to process the oauth2callback auth code and getting tokens
-oauth2callback(app);
 
 // Printing stringified JSON
 app.get('/dashboard', function(req, res){ 
 	res.render('home');
 });
 
-//app.get('/oauth2callback', function(req, res){ 
-//	console.log('auth code is: '+req.route.query.code);
-//	login_logic.getNewToken(req.route.query.code);
-//	res.send('It is here that I will bring up user home dash!');
-//});
+app.get('/oauth2callback', function(req, res){ 
+// call the oauth2callback to process the oauth2callback auth code and getting tokens
+	console.log('auth code is: '+req.route.query.code);
+	login_logic.getNewToken(req.route.query.code).then(oauth2callback(token)).then(function(response){
+		res.render('home');
+	});
+	res.send('It is here that I will bring up user home dash!');
+});
 
 app.get('/about', function(req, res){
 	res.render('about', {fortune: fortune.getFortune(), pageTestScript:'./public/qa/tests-about.js'});
