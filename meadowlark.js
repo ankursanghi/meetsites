@@ -6,7 +6,7 @@ var Q = require('q'); // Get Q to manage asynch calls. Callback hell is no fun!!
 var credentials = require('./credentials.js'); // to learn to use sessions
 var bodyParser = require('body-parser');
 var signup = require('./routes/signup.js');
-var oauth2callback = require('./routes/oauth2callback.js');
+var storeToken = require('./routes/storeToken.js');
 
 var mongoose = require('mongoose');
 
@@ -55,22 +55,22 @@ app.get('/', function(req, res){
 
 // call the signup function from the signup module.
 signup(app);
+storeToken(app);
 
+//app.get('/oauth2callback', function(req, res){ 
+//// call the oauth2callback to process the oauth2callback auth code and getting tokens
+//	console.log('auth code is: '+req.query.code);
+//	login_logic.getNewToken(req.query.code).then(oauth2callback).then(function(response){
+//			res.render('home');	
+//	}, function(err){
+//		console.log("i am getting an error from oauth2callback");
+//		next(err);
+//	}) ;
+//});
 
 // Printing stringified JSON
 app.get('/dashboard', function(req, res){ 
 	res.render('home');
-});
-
-app.get('/oauth2callback', function(req, res){ 
-// call the oauth2callback to process the oauth2callback auth code and getting tokens
-	console.log('auth code is: '+req.query.code);
-	login_logic.getNewToken(req.query.code).then(oauth2callback).then(function(response){
-			res.render('home');	
-	}, function(err){
-		console.log("i am getting an error from oauth2callback");
-		next(err);
-	}) ;
 });
 
 app.get('/about', function(req, res){
