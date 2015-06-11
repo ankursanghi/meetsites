@@ -65,10 +65,11 @@ app.get('/dashboard', function(req, res){
 app.get('/oauth2callback', function(req, res){ 
 // call the oauth2callback to process the oauth2callback auth code and getting tokens
 	console.log('auth code is: '+req.query.code);
-	return login_logic.getNewToken(req.query.code).then(function(token) { oauth2callback(token).then(function(response){
+	login_logic.getNewToken(req.query.code).then(oauth2callback).then(function(response){
 			res.render('home');	
-		}) ;
-	});
+	}, function(err){
+		console.log("i am getting an error from oauth2callback");
+	}) ;
 });
 
 app.get('/about', function(req, res){
