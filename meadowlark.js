@@ -69,7 +69,6 @@ app.get('/oauth2callback', function(req, res){
 			res.render('home');	
 		}) ;
 	});
-	res.send('It is here that I will bring up user home dash!');
 });
 
 app.get('/about', function(req, res){
