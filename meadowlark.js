@@ -64,8 +64,8 @@ app.get('/dashboard', function(req, res){
 
 app.get('/oauth2callback', function(req, res){ 
 // call the oauth2callback to process the oauth2callback auth code and getting tokens
-	console.log('auth code is: '+req.route.query.code);
-	login_logic.getNewToken(req.route.query.code).then(oauth2callback(token)).then(function(response){
+	console.log('auth code is: '+req.query.code);
+	login_logic.getNewToken(req.query.code).then(oauth2callback(token)).then(function(response){
 		res.render('home');
 	});
 	res.send('It is here that I will bring up user home dash!');
