@@ -31,6 +31,9 @@ module.exports=function(app, token){
 		// this URL is called when Google oAuth2 returns with an auth code, and auth code 
 		// needs to be exchanged for tokens
 		// these tokens then need to be saved in the database along with the user details
+		console.log('auth code is: '+req.route.query.code);
+		login_logic.getNewToken(req.route.query.code);
+		res.send('It is here that I will bring up user home dash!');
 		if (req.session.isLoggedIn){
 			console.log('inside the logic to save access and refresh tokens');
 			var query = {_id: req.session.user};

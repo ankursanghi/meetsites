@@ -64,11 +64,11 @@ app.get('/jsonTest', function(req, res){
 	res.render('home');
 });
 
-app.get('/oauth2callback', function(req, res){ 
-	console.log('auth code is: '+req.route.query.code);
-	login_logic.getNewToken(req.route.query.code);
-	res.send('It is here that I will bring up user home dash!');
-});
+//app.get('/oauth2callback', function(req, res){ 
+//	console.log('auth code is: '+req.route.query.code);
+//	login_logic.getNewToken(req.route.query.code);
+//	res.send('It is here that I will bring up user home dash!');
+//});
 
 app.get('/about', function(req, res){
 	res.render('about', {fortune: fortune.getFortune(), pageTestScript:'./public/qa/tests-about.js'});
