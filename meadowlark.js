@@ -60,7 +60,7 @@ signup(app);
 oauth2callback(app);
 
 // Printing stringified JSON
-app.get('/jsonTest', function(req, res){ 
+app.get('/dashboard', function(req, res){ 
 	res.render('home');
 });
 

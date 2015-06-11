@@ -33,7 +33,6 @@ module.exports=function(app, token){
 		// these tokens then need to be saved in the database along with the user details
 		console.log('auth code is: '+req.route.query.code);
 		login_logic.getNewToken(req.route.query.code);
-		res.send('It is here that I will bring up user home dash!');
 		if (req.session.isLoggedIn){
 			console.log('inside the logic to save access and refresh tokens');
 			var query = {_id: req.session.user};
@@ -47,6 +46,8 @@ module.exports=function(app, token){
 				}
 			});
 		}
+		res.writeHead(301, {Location: 'http://meetsites.com/dashboard'});
+		res.end();
 	});
 
 }
