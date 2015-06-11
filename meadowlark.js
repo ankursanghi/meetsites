@@ -69,6 +69,7 @@ app.get('/oauth2callback', function(req, res){
 			res.render('home');	
 	}, function(err){
 		console.log("i am getting an error from oauth2callback");
+		next(err);
 	}) ;
 });
 
