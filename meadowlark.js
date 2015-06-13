@@ -1,14 +1,13 @@
 var express = require('express');
 var fortune = require('./lib/fortune.js');
-var googleCalendar = require('./quickstart.js');
-var login_logic = require('./login_page.js');
+var googleCalendar = require('./googleapi.js');
 var Q = require('q'); // Get Q to manage asynch calls. Callback hell is no fun!!
 var credentials = require('./credentials.js'); // to learn to use sessions
 var bodyParser = require('body-parser');
 var signup = require('./routes/signup.js');
 var storeToken = require('./routes/storeToken.js');
 
-var mongoose = require('mongoose');
+var db = require('./models/db.js');
 
 var app = express();
 app.set('port', process.env.PORT || 8888);
@@ -26,6 +25,17 @@ var handlebars = require('express-handlebars') .create({ defaultLayout:'meetsite
 app.engine('handlebars', handlebars.engine);
 app.set('view engine', 'handlebars');
 //
+var connectString;
+switch(app.get('env')){ 
+	case 'development':
+		connectString = credentials.mongo.development.connectionString;
+		break;
+	case 'production':
+		connectString = credentials.mongo.production.connectionString;
+		break;
+	default:
+		throw new Error('Unknown execution environment: ' + app.get('env'));
+};
 // middleware to detect test=1 in querystring
 app.use(function(req, res, next){
 	res.locals.showTests = app.get('env') !== 'production' &&
@@ -47,30 +57,33 @@ app.get('/', function(req, res){
 	// the way I got around this issue is by passing the res object into getCalEvents and setting the partials.calResponse in
 	// the getCalEvents
 	// this is also a great way to pass parameters to the api by parsing out the req body (on post) or parameters (on get)
-	googleCalendar.getCalEvents(res).then(function(response){
-		res.cookie('signed_monster', 'nom nom', { signed: true });	
-		res.render('home');});
+	res.render('home');
+//	googleCalendar.getCalEvents(res).then(function(response){
+//		res.cookie('signed_monster', 'nom nom', { signed: true });	
+//		res.locals.partials.calResponse = response.items;
+//		res.render('home');});
 
 });
 
 // call the signup function from the signup module.
 signup(app);
-storeToken(app);
-
-//app.get('/oauth2callback', function(req, res){ 
-//// call the oauth2callback to process the oauth2callback auth code and getting tokens
-//	console.log('auth code is: '+req.query.code);
-//	login_logic.getNewToken(req.query.code).then(oauth2callback).then(function(response){
-//			res.render('home');	
-//	}, function(err){
-//		console.log("i am getting an error from oauth2callback");
-//		next(err);
-//	}) ;
-//});
+app.get('/oauth2callback', function(req, res){ 
+	storeToken(req, res, connectString).then(function (doc){
+		// do a redirect here to dashboard page
+		res.writeHead(301, {Location: '/dashboard'});
+		res.end();
+	});
+});
 
 // Printing stringified JSON
 app.get('/dashboard', function(req, res){ 
-	res.render('home');
+// TODO - add the logic to pick out the right mongoose connection string (prod or dev) and the session user-email
+// then, call the getCalEvents function with the connection string as one of the param
+// the getCalEvents will respond back
+	googleCalendar.getCalEvents(req, res, connectString).then(function(response){
+		res.cookie('signed_monster', 'nom nom', { signed: true });	
+		res.locals.partials.calResponse = response.items;
+		res.render('home');});
 });
 
 app.get('/about', function(req, res){

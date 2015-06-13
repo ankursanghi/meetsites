@@ -184,4 +184,4 @@ function getTokenURL(oauth2Client, res){
 
 }
 exports.presentNewTokenSignup= presentNewTokenSignup;
-exports.getNewToken= getNewToken;
+exports.getNewToken = getNewToken;

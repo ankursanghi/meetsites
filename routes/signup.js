@@ -1,10 +1,10 @@
 var mongoose = require('mongoose');
 // use the mongoose model in the application
-var User = require('../models/test1.js');
+var User = require('../models/userModel.js');
 var credentials = require('../credentials.js'); // to learn to use sessions
 var crypto = require('crypto');
 var hash = require('../helpers/hash.js');
-var signupGoogle = require('../login_page.js');
+var signupGoogle = require('../signupGoogle.js');
 
 var opts = {
 	server : {
@@ -30,19 +30,6 @@ User.find(function(err, users){
 	}).save();
 });
 module.exports=function(app){
-	switch(app.get('env')){ 
-		case 'development':
-			mongoose.connect(credentials.mongo.development.connectionString, opts);
-			break;
-		case 'production':
-			mongoose.connect(credentials.mongo.production.connectionString, opts, function(err){
-				if (err){ console.log("Hey! MongoDB connection failed");} else {
-					console.log("Hey! MongoDB connection successful!");}
-			});
-			break;
-		default:
-			throw new Error('Unknown execution environment: ' + app.get('env'));
-	};
 	// Login page here
 	app.get('/login', function(req, res){ 
 		// Call a function to get redirect URL to authorize user's Google credentials
@@ -80,6 +67,7 @@ module.exports=function(app){
 					}
 					return next(err);
 				}
+				console.log("new user added:"+JSON.stringify(newUser));
 			});
 			req.session.isLoggedIn = true;
 			req.session.user = email;

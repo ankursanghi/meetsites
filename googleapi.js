@@ -1,3 +1,10 @@
+// Mongoose to connect to the noSQL DB for user login
+// remember that the connect string is passed to the functions in this module based on env variable NODE_ENV
+var mongoose = require('mongoose');
+// use the mongoose model in the application
+var User = require('./models/userModel.js');
+
+var signupGoogle = require('./signupGoogle.js');
 var fs = require('fs');
 var Q = require('q'); // Get Q to manage asynch calls. Callback hell is no fun!!
 var readline = require('readline');
@@ -5,11 +12,16 @@ var google = require('googleapis');
 var googleAuth = require('google-auth-library');
 var calendar = google.calendar('v3');
 
-var SCOPES = ['https://www.googleapis.com/auth/calendar.readonly'];
+var SCOPES = ['https://www.googleapis.com/auth/calendar'];
 var TOKEN_DIR = (process.env.HOME || process.env.HOMEPATH ||
 		process.env.USERPROFILE) + '/.credentials/';
 var TOKEN_PATH = TOKEN_DIR + 'calendar-api-quickstart.json';
 
+var opts = {
+	server : {
+			 socketOptions:{keepAlive:1}
+		 }
+};
 /**
  * Create an OAuth2 client with the given credentials, and then execute the
  * given callback function.
@@ -18,7 +30,7 @@ var TOKEN_PATH = TOKEN_DIR + 'calendar-api-quickstart.json';
  * @param {function} callback The callback to call with the authorized client.
  */
 // function authorize(credentials, callback) {
-function authorize(credentials) {
+function authorize(credentials, req, res, connectString) {
 	var deferred = Q.defer();
 	var clientSecret = credentials.installed.client_secret;
 	var clientId = credentials.installed.client_id;
@@ -26,18 +38,29 @@ function authorize(credentials) {
 	var auth = new googleAuth();
 	var oauth2Client = new auth.OAuth2(clientId, clientSecret, redirectUrl);
 
+//	mongoose.connect(connectString, opts, function(err){
+//		if (err){ console.log("Hey! MongoDB connection failed");} else {
+//			console.log("Hey! MongoDB connection successful!");}
+//	});
+
 	// Check if we have previously stored a token.
-	fs.readFile(TOKEN_PATH, function(err, token) {
-		if (err) {
-			deferred.reject();
-//			getNewToken(oauth2Client, callback);
-			getNewToken(oauth2Client);
-		} else {
-			oauth2Client.credentials = JSON.parse(token);
-			deferred.resolve(oauth2Client);
-//			callback(oauth2Client);
-		}
-	});
+	// TODO - this file read needs to be replaced with a mongo query
+//	fs.readFile(TOKEN_PATH, function(err, token) {
+	if (req.session.isLoggedIn){
+		var query = User.findOne({_id : req.session.user});
+		query.select('token');
+		query.exec(function (err, doc){
+			if (err) {
+				deferred.reject();
+				signupGoogle.presentNewTokenSignup(oauth2Client, res);
+			} else {
+//				oauth2Client.credentials = JSON.parse(token);
+				console.log('token retrieved from db:'+doc.token);
+				oauth2Client.credentials = doc.token;
+				deferred.resolve(oauth2Client);
+			}
+		});
+	}
 	return deferred.promise;
 }
 
@@ -130,7 +153,10 @@ function getEvents(auth) {
 	return deferred.promise; // return a promise
 }
 
-function getCalEvents(res) {
+// this function is the one exported
+// it gets the request object, response object, and the mongoDB connect string
+// and returns the response of Google Calendar API call to get Events on the calendar.
+function getCalEvents(req, res, connectString) {
 	// Load client secrets from a local file.
 	var deferred = Q.defer();
 	fs.readFile('client_secret.json', function processClientSecrets(err, content) {
@@ -141,15 +167,13 @@ function getCalEvents(res) {
 		}
 		// Authorize a client with the loaded credentials, then call the Calendar API.
 
-//		var auth = authorize(JSON.parse(content));
 //		authorize(JSON.parse(content)).then(getEvents(oauth2Client)).then(console.log('I got my response here:'+JSON.stringify(events)));
-		authorize(JSON.parse(content)).then(
+		authorize(JSON.parse(content), req, res, connectString).then(
 			function(oauth2Client) { 
 				getEvents(oauth2Client).then(
 				function(response){
 //					console.log('the events are stringified here:'+JSON.stringify(response.items));
 					deferred.resolve(response);
-					res.locals.partials.calResponse = response.items;
 				})
 			});
 	});
