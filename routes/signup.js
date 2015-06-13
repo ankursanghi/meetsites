@@ -31,7 +31,7 @@ User.find(function(err, users){
 });
 module.exports=function(app){
 	// Login page here
-	app.get('/login', function(req, res){ 
+	app.get('/signup', function(req, res){ 
 		// Call a function to get redirect URL to authorize user's Google credentials
 		//	googleCalendar.getRedirURL(res).then(function(url){
 		// Use the 301 redirect to send to the authorization URL
