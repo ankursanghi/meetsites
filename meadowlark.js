@@ -57,7 +57,7 @@ app.get('/', function(req, res){
 	// the way I got around this issue is by passing the res object into getCalEvents and setting the partials.calResponse in
 	// the getCalEvents
 	// this is also a great way to pass parameters to the api by parsing out the req body (on post) or parameters (on get)
-	res.render('home');
+	res.render('index');
 //	googleCalendar.getCalEvents(res).then(function(response){
 //		res.cookie('signed_monster', 'nom nom', { signed: true });	
 //		res.locals.partials.calResponse = response.items;
@@ -66,7 +66,9 @@ app.get('/', function(req, res){
 });
 
 // call the signup function from the signup module.
-signup(app);
+signup(app); // when the user fills out the form, they are presented with a page to approve access to their Google calendar
+		// after the approval, the callback url points to oauth2callback
+
 app.get('/oauth2callback', function(req, res){ 
 	storeToken(req, res, connectString).then(function (doc){
 		// do a redirect here to dashboard page
