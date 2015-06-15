@@ -17,7 +17,7 @@ jQuery(function($) {
 		});
 		event.preventDefault();
 	});
-	$('body').on('click',"#topclose", function(event) {
+	$('body').on('click',"#topclose, #bottomclose", function(event) {
 		var $target = $("#myModal");
 
 		$.ajax({
