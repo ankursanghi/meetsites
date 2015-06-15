@@ -6,6 +6,7 @@ var credentials = require('./credentials.js'); // to learn to use sessions
 var bodyParser = require('body-parser');
 var signup = require('./routes/signup.js');
 var storeToken = require('./routes/storeToken.js');
+var store_earlyUser= require('./routes/store_earlyUser.js');
 
 var db = require('./models/db.js');
 
@@ -58,16 +59,31 @@ app.get('/', function(req, res){
 	// the getCalEvents
 	// this is also a great way to pass parameters to the api by parsing out the req body (on post) or parameters (on get)
 	res.render('index');
-//	googleCalendar.getCalEvents(res).then(function(response){
-//		res.cookie('signed_monster', 'nom nom', { signed: true });	
-//		res.locals.partials.calResponse = response.items;
-//		res.render('home');});
+	//	googleCalendar.getCalEvents(res).then(function(response){
+	//		res.cookie('signed_monster', 'nom nom', { signed: true });	
+	//		res.locals.partials.calResponse = response.items;
+	//		res.render('home');});
 
+});
+
+// landing page signup would be app.post on the index page
+app.post('/early_signup', function(req, res, next){
+	console.log('When a submit is hit on the index page...');
+	store_earlyUser(req,res,next).then(function(newUser){
+		res.sendFile('views/ajax-response.html', {root: __dirname});
+	});
+	// TODO include an if in the index view so that the modal shows open with a thank you message when someone signs up!
+	// TODO write a store_earlyUser function
+	// TODO push this to github and to the server
+});
+app.get('/early_signup_reset', function(req, res){
+	console.log('signup reset now');
+	res.sendFile('views/ajax-form.html', {root: __dirname});
 });
 
 // call the signup function from the signup module.
 signup(app); // when the user fills out the form, they are presented with a page to approve access to their Google calendar
-		// after the approval, the callback url points to oauth2callback
+// after the approval, the callback url points to oauth2callback
 
 app.get('/oauth2callback', function(req, res){ 
 	storeToken(req, res, connectString).then(function (doc){
@@ -79,9 +95,9 @@ app.get('/oauth2callback', function(req, res){
 
 // Printing stringified JSON
 app.get('/dashboard', function(req, res){ 
-// TODO - add the logic to pick out the right mongoose connection string (prod or dev) and the session user-email
-// then, call the getCalEvents function with the connection string as one of the param
-// the getCalEvents will respond back
+	// TODO - add the logic to pick out the right mongoose connection string (prod or dev) and the session user-email
+	// then, call the getCalEvents function with the connection string as one of the param
+	// the getCalEvents will respond back
 	googleCalendar.getCalEvents(req, res, connectString).then(function(response){
 		res.cookie('signed_monster', 'nom nom', { signed: true });	
 		res.locals.partials.calResponse = response.items;

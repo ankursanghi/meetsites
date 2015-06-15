@@ -20,6 +20,10 @@ h6 {
     font-family: "Lato","Helvetica Neue",Helvetica,Arial,sans-serif;
     font-weight: 700;
 }
+h2 {
+	margin-top:0px;
+	margin-bottom:5px;
+}
 body {
 	padding-top: 50px;
 }
@@ -44,8 +48,8 @@ body {
 
 .intro-message {
     position: relative;
-    padding-top: 20%;
-    padding-bottom: 20%;
+    padding-top: 5%;
+    padding-bottom: 5%;
 }
 
 .intro-message > h1 {
@@ -164,7 +168,7 @@ body {
 }
 
 footer {
-    padding: 50px 0;
+    padding: 20px 0;
     background-color: #f8f8f8;
 }
 

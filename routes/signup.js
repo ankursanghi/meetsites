@@ -38,19 +38,19 @@ module.exports=function(app){
 		// This authorization URL already has a redirect URL passed into it
 		// Google auth URL redirects back to it.
 		console.log("On the login page...");
-		res.render('login_form');
+		res.render('signup_form');
 		// present the new Token sign up page on app.post
 		// login_logic.presentNewTokenSignup(res);
 	});
 
 	//create a new account
-	app.post('/login', function(req,res,next){
+	app.post('/signup', function(req,res,next){
 		var firstName = req.body.firstname;
 		var lastName = req.body.lastname;
 		var email = req.body.email;
 		var passwd = req.body.pwd;
 		function invalid (){
-			res.render('login_form', {invalid: true});
+			res.render('signup_form', {invalid: true});
 		}
 		console.log("name:"+firstName+" "+lastName+" "+email);
 		if (!(email && passwd)) return invalid();
