@@ -105,8 +105,11 @@ hr {
 }
 
 .box {
+	border-radius: 3px;
+    	box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 10px 0 rgba(0, 0, 0, 0.12);
+	margin-top: 25px;
 	margin-bottom: 20px;
-	padding: 30px 15px;
+	padding: 20px 15px;
 	background: #fff;
 	background: rgba(255,255,255,0.9);
 }
@@ -199,4 +202,53 @@ p.copyright {
 div.aboutimg {
 	width: 548px
 	height: 240px
+}
+
+.card {
+    background-color: #fff;
+    border: 1px solid #ccc;
+    margin-bottom: 10px
+}
+.card-content {
+    *zoom: 1;
+    position: relative
+}
+.card-content:after {
+    content: "";
+    display: table;
+    clear: both
+}
+.card-image {
+    float: left;
+    width: 120px
+}
+.card-image:before {
+    background-color: #f7f5f2;
+    content: '';
+    height: 100%;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: 120px;
+    z-index: 0
+}
+.card-image>* {
+    position: relative
+}
+.card-body {
+    overflow: hidden;
+    padding: 12px 20px
+}
+.detail {
+    padding: 12px 20px
+}
+.detail-title {
+    color: #888;
+    font-size: 12px;
+    letter-spacing: .5px;
+    text-align: center;
+    text-transform: uppercase
+}
+.detail-body {
+    margin-top: 15px
 }

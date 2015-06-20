@@ -115,7 +115,7 @@ app.get('/headers', function(req,res){
 });
 
 app.get('/csstest', function(req,res){
-	res.render('csstest', { layout: false});
+	res.render('search_result' );
 });
 
 app.get('/javascript_test', function(req,res){
