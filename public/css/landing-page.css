@@ -252,3 +252,18 @@ div.aboutimg {
 .detail-body {
     margin-top: 15px
 }
+
+.panel {
+    background-color: #fff;
+    border: 1px solid #ccc;
+    margin-bottom: 20px;
+    margin-top: 25px
+}
+.panel .panel-body {
+    padding-bottom: 12px;
+    padding-top: 12px
+}
+
+#searchpanel {
+	margin-top: 25px
+}

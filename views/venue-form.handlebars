@@ -1,0 +1,46 @@
+<div class = "container">
+<form role="form" method="POST">
+	{{#if invalid}}
+		<div class="alert alert-warning">Warning ! Missing fields!
+		</div>	
+	{{/if}}
+
+	<div class="form-group">
+		<label for="venuename">Name of Venue(required)</label>
+		<input type="text" class="form-control" id="venuename" name="venuename">
+	</div>
+	<p>Venue can be used for</p>
+	<div class="form-group">
+		<label for="kids" class="checkbox-inline">
+			<input type="checkbox" name="use4kids" id="use4kids" value="true">Kids events
+		</label>
+		<label for="parties" class="checkbox-inline">
+			<input type="checkbox" name="use4party" id="use4party" value="true">Parties
+		</label>
+		<label for="corporate" class="checkbox-inline">
+			<input type="checkbox" name="use4corp" id="use4corp" value="true">Corporate events
+		</label>
+	</div>
+	<div class="form-group">
+		<label for="addressline1">Address line 1:</label>
+		<input type="text" class="form-control" id="addressline1" name="addressline1">
+	</div>
+	<div class="form-group">
+		<label for="addressline2">Address line 2:</label>
+		<input type="text" class="form-control" id="addressline2" name="addressline2">
+	</div>
+	<p>Ameneties</p>
+	<div class="form-group">
+		<label for="wifi" class="checkbox-inline">
+			<input type="checkbox" name="wifi" id="wifi" value="true">WiFi
+		</label>
+		<label for="coffee" class="checkbox-inline">
+			<input type="checkbox" name="coffee" id="coffee" value="true">Coffee
+		</label>
+		<label for="posteventcleaning" class="checkbox-inline">
+			<input type="checkbox" name="posteventcleaning" id="posteventcleaning" value="true">Post Event Cleaning
+		</label>
+	</div>
+	<button type="submit" class="btn btn-default">Submit</button>
+</form>
+</div>

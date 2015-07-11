@@ -5,8 +5,10 @@ var Q = require('q'); // Get Q to manage asynch calls. Callback hell is no fun!!
 var credentials = require('./credentials.js'); // to learn to use sessions
 var bodyParser = require('body-parser');
 var signup = require('./routes/signup.js');
+var login = require('./routes/login.js');
 var storeToken = require('./routes/storeToken.js');
 var store_earlyUser= require('./routes/store_earlyUser.js');
+var venue_route = require('./routes/manage_venues.js');
 
 var db = require('./models/db.js');
 
@@ -85,14 +87,37 @@ app.get('/early_signup_reset', function(req, res){
 signup(app); // when the user fills out the form, they are presented with a page to approve access to their Google calendar
 // after the approval, the callback url points to oauth2callback
 
-app.get('/oauth2callback', function(req, res){ 
+// send to a function to check whether the venue is already set-up, if not 
+// present the venues page.
+// do a redirect here to dashboard page
+app.get('/oauth2callback', function(req, res, next){ 
 	storeToken(req, res, connectString).then(function (doc){
-		// do a redirect here to dashboard page
+		venue_route.checkIfExists(req,res,next).then(function(venue){
+			res.writeHead(301, {Location: '/dashboard'});
+			res.end();
+		},
+		// IF the function below is being called, it means that venue has not been stored for this user yet.
+		function(err){
+			console.log('error from checkIfExists'+err);
+			res.writeHead(301, {Location: '/venue'});
+			res.end();
+		});
+	});
+});
+// handle the get/post on venue form here
+app.get('/venue',function(req,res, next){
+	res.render('venue-form');
+});
+app.post('/venue', function(req,res,next){
+	venue_route.storeVenue(req).then(function(doc){
 		res.writeHead(301, {Location: '/dashboard'});
 		res.end();
 	});
 });
-
+// Log in to the main application here
+// pass in the callback of venue_route.checkIfExists to see if there is a venue.
+// the login route will check 
+login(app,venue_route.checkIfExists);
 // Printing stringified JSON
 app.get('/dashboard', function(req, res){ 
 	// TODO - add the logic to pick out the right mongoose connection string (prod or dev) and the session user-email
@@ -114,11 +139,21 @@ app.get('/headers', function(req,res){
 	for(var name in req.headers) s += name + ': ' + req.headers[name] + '\n'; res.send(s);
 });
 
-app.get('/csstest', function(req,res){
-	res.render('search_result' );
+app.get('/browse', function(req,res, next){
+	venue_route.fetchVenues(req, res, next).then(function(venues){
+		res.locals.partials.venues = venues;
+		res.render('search_result');
+	});
 });
 
-app.get('/javascript_test', function(req,res){
+app.post('/browse', function(req,res, next){
+	venue_route.fetchVenues(req, res, next).then(function(venues){
+		res.locals.partials.venues = venues;
+		res.render('search_result');
+	});
+});
+
+app.get('/javascript_test', function(req,res,next){
 	res.render('javascript_test', { layout: false});
 });
 // Declare static content location

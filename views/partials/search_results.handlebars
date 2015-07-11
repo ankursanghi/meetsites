@@ -1,0 +1,25 @@
+{{#each partials.venues}}
+	<div class="card">
+		<div class="card-content">
+			<div class="card-image">
+				<img src="img/gaba.jpg" width="120" height="120">
+				<div class="detail">
+					<div class="detail-title">
+						From
+					</div>
+				</div>
+			</div>
+			<div class="card-body">
+				<div class="vcard">
+					<h2 class="vcard-title">
+						{{_id}}	
+					</h2>
+					<div class="vcard-line-item">
+						<span class="vcard-name">{{detail1}}</span>
+						<span class="vcard-location">{{address.line1}} {{address.line2}}</span>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+{{/each}}

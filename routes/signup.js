@@ -37,7 +37,7 @@ module.exports=function(app){
 		// Use the 301 redirect to send to the authorization URL
 		// This authorization URL already has a redirect URL passed into it
 		// Google auth URL redirects back to it.
-		console.log("On the login page...");
+		console.log("On the signup page...");
 		res.render('signup_form');
 		// present the new Token sign up page on app.post
 		// login_logic.presentNewTokenSignup(res);

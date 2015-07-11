@@ -32,9 +32,9 @@ var opts = {
 // function authorize(credentials, callback) {
 function authorize(credentials, req, res, connectString) {
 	var deferred = Q.defer();
-	var clientSecret = credentials.installed.client_secret;
-	var clientId = credentials.installed.client_id;
-	var redirectUrl = credentials.installed.redirect_uris[0];
+	var clientSecret = credentials.web.client_secret;
+	var clientId = credentials.web.client_id;
+	var redirectUrl = credentials.web.redirect_uris[0];
 	var auth = new googleAuth();
 	var oauth2Client = new auth.OAuth2(clientId, clientSecret, redirectUrl);
 
@@ -132,6 +132,7 @@ function getEvents(auth) {
 		}, function(err, response) {
 			if (err) {
 				console.log('There was an error contacting the Calendar service: ' + err);
+				console.log('Response from the Calendar service: ' + response);
 				deferred.reject(); // deferred reject here
 				return;
 			}
@@ -159,7 +160,7 @@ function getEvents(auth) {
 function getCalEvents(req, res, connectString) {
 	// Load client secrets from a local file.
 	var deferred = Q.defer();
-	fs.readFile('client_secret.json', function processClientSecrets(err, content) {
+	fs.readFile('client_secret_oAuth.json', function processClientSecrets(err, content) {
 		if (err) {
 			console.log('Error loading client secret file: ' + err);
 			deferred.reject(err);

@@ -174,14 +174,5 @@ function getEvents(auth) {
 	return deferred.promise; // return a promise
 }
 
-function getTokenURL(oauth2Client, res){
-	var deferred = Q.defer();
-
-	var authUrl = oauth2Client.generateAuthUrl({
-		access_type: 'offline',
-	    scope: SCOPES
-	});
-
-}
 exports.presentNewTokenSignup= presentNewTokenSignup;
 exports.getNewToken = getNewToken;
