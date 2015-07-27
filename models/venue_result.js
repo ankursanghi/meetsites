@@ -1,4 +1,5 @@
 var mongoose = require('mongoose');
+var mongoosePaginate = require('mongoose-paginate');
 
 var venue_schema = mongoose.Schema({
 	_id: {type: String, lowercase: true, trim: true},
@@ -21,6 +22,7 @@ var venue_schema = mongoose.Schema({
 	},
 	pic_locations: [String]
 });
+venue_schema.plugin(mongoosePaginate);
 
 var venue = mongoose.model('venue', venue_schema );
 module.exports=venue;

@@ -1,6 +1,7 @@
 var mongoose = require('mongoose');
 // use the mongoose model in the application
 var Venue = require('../models/venue_result.js');
+
 var credentials = require('../credentials.js'); // to learn to use sessions
 var Q = require('q'); // Get Q to manage asynch calls. Callback hell is no fun!!
 
@@ -9,7 +10,6 @@ var opts = {
 			 socketOptions:{keepAlive:1}
 		 }
 };
-
 function check_if_exists(req, res, next){
 	function invalid (){
 		res.render('index', {invalid: true});
@@ -38,7 +38,7 @@ function check_if_exists(req, res, next){
 function storeVenue(req,res,next){
 	var deferred = Q.defer();
 	if (req.session.isLoggedIn){
-		var query = {host_email: req.session.user};
+		var query = {_id: req.body.venuename};
 		var venue ={};
 		var options = {upsert: true};
 		console.log('req.body:'+JSON.stringify(req.body));
@@ -60,7 +60,7 @@ function storeVenue(req,res,next){
 		venue.ameneties.posteventcleaning = req.body.posteventcleaning || false;
 		Venue.findOneAndUpdate(query, venue , options, function(err, doc){
 			if (err){
-				console.log("received an error while updating/inserting the venue");
+				console.log("received an error while updating/inserting the venue"+err);
 				deferred.reject(err);
 				return next(err);
 			}
@@ -81,15 +81,27 @@ function fetchVenues(req, res, next){
 		myQuery.where('_id').equals(req.body.venuename);
 	}
 	myQuery.select('_id address uses ameneties'); // this will have to change to accommodate pictures
-	myQuery.exec(function(err, venues){
-		if (err){
-			deferred.reject(err);
+	//Venue.paginate(myQuery, function(error, pageCount,paginatedResults, itemCount){
+	console.log('here to fetch venues...');
+	Venue.paginate({}, { page: req.query.page, limit: 5, columns: '_id address uses ameneties'}, function(error, paginatedResults, pageCount, itemCount){
+		if (error){
+			console.error('error ho gaya...');
+			deferred.reject(error);
 		}else {
-			console.log("Venues: "+venues);
-			deferred.resolve(venues);
+			console.log('pages:'+pageCount);
+			deferred.resolve({result:paginatedResults,pageCount:pageCount,itemCount:itemCount});
 		}
-	});
+	} );
+//	myQuery.exec(function(err, venues){
+//		if (err){
+//			deferred.reject(err);
+//		}else {
+//			console.log("Venues: "+venues);
+//			deferred.resolve(venues);
+//		}
+//	});
 	//}
+
 	return deferred.promise;
 }
 exports.checkIfExists= check_if_exists;

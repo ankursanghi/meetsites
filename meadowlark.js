@@ -9,6 +9,9 @@ var login = require('./routes/login.js');
 var storeToken = require('./routes/storeToken.js');
 var store_earlyUser= require('./routes/store_earlyUser.js');
 var venue_route = require('./routes/manage_venues.js');
+var paginateHelper = require('express-handlebars-paginate');
+var util = require('util');
+var mediaManager = require('./routes/manage_media.js');
 
 var db = require('./models/db.js');
 
@@ -24,7 +27,14 @@ app.use(require('express-session')());
 app.use(bodyParser());
 
 // set up handlebars view engine
-var handlebars = require('express-handlebars') .create({ defaultLayout:'meetsites' });
+var hbs = require('express-handlebars');
+var handlebars = hbs.create({ defaultLayout:'meetsites',
+				helpers : {
+					paginateHelper: paginateHelper.createPagination
+				}
+		  });
+//console.log('paginate Helper is:'+util.inspect(paginateHelper.createPagination,false, null));
+
 app.engine('handlebars', handlebars.engine);
 app.set('view engine', 'handlebars');
 //
@@ -140,9 +150,13 @@ app.get('/headers', function(req,res){
 });
 
 app.get('/browse', function(req,res, next){
-	venue_route.fetchVenues(req, res, next).then(function(venues){
-		res.locals.partials.venues = venues;
-		res.render('search_result');
+	venue_route.fetchVenues(req, res, next).then(function(venuesResult){
+		console.log('returned results... totalRows:'+venuesResult.itemCount);
+		console.log('returned results... pageCount:'+venuesResult.pageCount);
+		console.log(venuesResult.result);
+		res.locals.partials.venues = venuesResult.result;
+		res.render('search_result', {pagination: {page:req.query.page || 1, limit:5, totalRows:venuesResult.itemCount}}
+		);
 	});
 });
 
@@ -154,6 +168,7 @@ app.post('/browse', function(req,res, next){
 });
 
 app.get('/javascript_test', function(req,res,next){
+	mediaManager.listBuckets();
 	res.render('javascript_test', { layout: false});
 });
 // Declare static content location
