@@ -28,12 +28,19 @@ app.use(bodyParser());
 
 // set up handlebars view engine
 var hbs = require('express-handlebars');
-var handlebars = hbs.create({ defaultLayout:'meetsites',
+var handlebars = hbs.create({ defaultLayout:'meetsites_new',
 				helpers : {
-					paginateHelper: paginateHelper.createPagination
+					paginateHelper: paginateHelper.createPagination,
+					hrefMaker: function(my_link, text){
+							if (my_link=='') return '';
+							var url = handlebars.handlebars.escapeExpression(my_link);
+							var result = "<a href=/host_detail?_id=" + url + ">";
+
+							return new handlebars.handlebars.SafeString(result);
+						}
 				}
 		  });
-//console.log('paginate Helper is:'+util.inspect(paginateHelper.createPagination,false, null));
+console.log('hbs is:'+util.inspect(hbs.ExpressHandlebars,false, null));
 
 app.engine('handlebars', handlebars.engine);
 app.set('view engine', 'handlebars');
@@ -49,6 +56,8 @@ switch(app.get('env')){
 	default:
 		throw new Error('Unknown execution environment: ' + app.get('env'));
 };
+// Declare static content location
+app.use(express.static(__dirname + '/public'));
 // middleware to detect test=1 in querystring
 app.use(function(req, res, next){
 	res.locals.showTests = app.get('env') !== 'production' &&
@@ -63,14 +72,14 @@ app.use(function(req, res, next) {
 });
 
 app.get('/', function(req, res){
-	//	res.send('circle details' + JSON.stringify(circle.circleDetails(7)));
 	// The reason response.items cannot be pulled out of the googleCalendar quickStart js is because the scope of the 
 	// variables in node is limited to the module.
 	// Perhaps there is a way to use exports to fetch this variable out to this module.
 	// the way I got around this issue is by passing the res object into getCalEvents and setting the partials.calResponse in
 	// the getCalEvents
 	// this is also a great way to pass parameters to the api by parsing out the req body (on post) or parameters (on get)
-	res.render('index');
+	// res.render('landingpage');
+	 res.render('index');
 	//	googleCalendar.getCalEvents(res).then(function(response){
 	//		res.cookie('signed_monster', 'nom nom', { signed: true });	
 	//		res.locals.partials.calResponse = response.items;
@@ -99,11 +108,11 @@ signup(app); // when the user fills out the form, they are presented with a page
 
 // send to a function to check whether the venue is already set-up, if not 
 // present the venues page.
-// do a redirect here to dashboard page
+// do a redirect here to profile page
 app.get('/oauth2callback', function(req, res, next){ 
 	storeToken(req, res, connectString).then(function (doc){
 		venue_route.checkIfExists(req,res,next).then(function(venue){
-			res.writeHead(301, {Location: '/dashboard'});
+			res.writeHead(301, {Location: '/hostprofile'});
 			res.end();
 		},
 		// IF the function below is being called, it means that venue has not been stored for this user yet.
@@ -120,7 +129,7 @@ app.get('/venue',function(req,res, next){
 });
 app.post('/venue', function(req,res,next){
 	venue_route.storeVenue(req).then(function(doc){
-		res.writeHead(301, {Location: '/dashboard'});
+		res.writeHead(301, {Location: '/hostprofile'});
 		res.end();
 	});
 });
@@ -136,27 +145,25 @@ app.get('/dashboard', function(req, res){
 	googleCalendar.getCalEvents(req, res, connectString).then(function(response){
 		res.cookie('signed_monster', 'nom nom', { signed: true });	
 		res.locals.partials.calResponse = response.items;
-		res.render('home');});
+		res.render('dashboard');});
 });
 
 app.get('/about', function(req, res){
 	res.render('about', {fortune: fortune.getFortune(), pageTestScript:'./public/qa/tests-about.js'});
 });
 
-app.get('/headers', function(req,res){
-	res.set('Content-Type','text/plain');
-	var s='';
-	for(var name in req.headers) s += name + ': ' + req.headers[name] + '\n'; res.send(s);
+app.get('/home', function(req, res, next){
+	res.render('home');
 });
-
 app.get('/browse', function(req,res, next){
 	venue_route.fetchVenues(req, res, next).then(function(venuesResult){
 		console.log('returned results... totalRows:'+venuesResult.itemCount);
 		console.log('returned results... pageCount:'+venuesResult.pageCount);
 		console.log(venuesResult.result);
 		res.locals.partials.venues = venuesResult.result;
-		res.render('search_result', {pagination: {page:req.query.page || 1, limit:5, totalRows:venuesResult.itemCount}}
-		);
+		res.render('search_result', {search_obj: {pagination: {page:req.query.page || 1, limit:5, totalRows:venuesResult.itemCount},
+						          my_link: {url:'/host_details?id='}
+		}});
 	});
 });
 
@@ -167,12 +174,12 @@ app.post('/browse', function(req,res, next){
 	});
 });
 
+mediaManager.storeMediaStream(app);
+
 app.get('/javascript_test', function(req,res,next){
 	mediaManager.listBuckets();
 	res.render('javascript_test', { layout: false});
 });
-// Declare static content location
-app.use(express.static(__dirname + '/public'));
 
 app.use(function(req, res,next){ 
 	res.status(404);

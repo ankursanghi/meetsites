@@ -1,5 +1,8 @@
 var AWS = require('aws-sdk');
 var S3FS = require('s3fs');
+var multer = require('multer');
+var s3 = require('multer-s3');
+var aws_creds = require('../aws_credentials.json');
 
 AWS.config.loadFromPath('./aws_credentials.json');
 AWS.config.update({region: 'us-east-1'});
@@ -31,6 +34,32 @@ function storeMedia (req, res){
 	});
 }
 
+function storeMediaStream (app){
+
+	var upload = multer({
+		storage: s3({
+				dirname:'VenueImages',
+				bucket: 'meetsites-images',
+				secretAccessKey: aws_creds.secretAccessKey, 
+				accessKeyId: aws_creds.accessKeyId,
+				region: 'us-east-1'
+			 })
+	});
+//	var upload = multer({dest: './uploads'});
+	app.get('/imgUpload', function(req, res, next){
+		res.render('imgUpload');
+	});
+
+	app.post('/imgUpload', upload.array('photos', 10), function(req, res, next){
+	//	var fsImpl = new S3FS('meetsites-images/VenueImages', options);
+		console.log('req.files:'+JSON.stringify(req.files));
+		console.log('req.file:'+JSON.stringify(req.file));
+		console.log(req.body); // form fields
+	    	console.log(req.files); // fo
+		// add the code to update the mongoDB object with the file Names and Venue Name. TBD
+		res.send ('done');
+	});
+}
 function baseS3Test (){
 	var s3 = new AWS.S3({params: {Bucket: 'meetsites-images', Key: 'key1'}});
 	s3.createBucket({Bucket: 'meetsites-images'}, function() {
@@ -60,5 +89,6 @@ function listBuckets (){
 }
 
 exports.storeMedia = storeMedia;
+exports.storeMediaStream = storeMediaStream;
 exports.baseS3Test = baseS3Test;
 exports.listBuckets = listBuckets;
