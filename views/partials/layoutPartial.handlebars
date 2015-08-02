@@ -2,6 +2,7 @@
 <!--[if IE 8]> <html lang="en" class="ie8"> <![endif]-->
 <!--[if IE 9]> <html lang="en" class="ie9"> <![endif]-->
 <!--[if !IE]><!--> <html lang="en"> <!--<![endif]-->
+	{{#block "head"}}
 <head>
 	<title>MeetSites - your venue to find venues</title>
 
@@ -42,17 +43,19 @@
 	<link rel="stylesheet" href="assets/css/custom.css">
 	{{{_sections.head}}}
 </head>
-
+	{{/block}}
 <body>
 	<div class="wrapper">
 		<!--=== Header ===-->
 		<div class="header">
 			<div class="container">
+				{{#block "logo"}}
 				<!-- Logo -->
 				<a class="logo" href="/">
 					<img src="assets/img/logo1-default.png" alt="Logo">
 				</a>
 				<!-- End Logo -->
+				{{/block}}
 
 				<!-- Topbar -->
 				<div class="topbar">
@@ -65,15 +68,16 @@
 					</ul>
 				</div>
 				<!-- End Topbar -->
-
+				{{#block "mobiletoggle"}}
 				<!-- Toggle get grouped for better mobile display -->
 				<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-responsive-collapse">
 					<span class="sr-only">Toggle navigation</span>
 					<span class="fa fa-bars"></span>
 				</button>
 				<!-- End Toggle -->
+				{{/block}}
 			</div><!--/end container-->
-
+			{{#block "moretogglecontent"}}
 			<!-- Collect the nav links, forms, and other content for toggling -->
 			<div class="collapse navbar-collapse mega-menu navbar-responsive-collapse">
 				<div class="container">
@@ -140,10 +144,14 @@
 					</ul>
 				</div><!--/end container-->
 			</div><!--/navbar-collapse-->
+			{{/block}}
 		</div>
 		<!--=== End Header ===-->
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+		{{#block "mainbody"}}
 		{{{body}}}
+		{{/block}}
+		{{#block "footer"}}
 		    <!--=== Footer Version 1 ===-->
 		    <div class="footer-v1">
 			<div class="footer">
@@ -264,7 +272,9 @@
 		</div><!--/copyright-->
 	    </div>
 	    <!--=== End Footer Version 1 ===-->
+	    {{/block}}
 	</body>
+	{{#block "scripts"}}
 	<!-- JS Global Compulsory -->
 	<script type="text/javascript" src="assets/plugins/jquery/jquery.min.js"></script>
 	<script type="text/javascript" src="assets/plugins/jquery/jquery-migrate.min.js"></script>
@@ -291,6 +301,7 @@
 				    OwlCarousel.initOwlCarousel();
 		     });
 	</script>
+	{{/block}}
 			<!--[if lt IE 9]>
 			<script src="assets/plugins/respond.js"></script>
 			<script src="assets/plugins/html5shiv.js"></script>

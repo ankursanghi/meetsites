@@ -37,7 +37,6 @@ module.exports=function(app){
 		// Use the 301 redirect to send to the authorization URL
 		// This authorization URL already has a redirect URL passed into it
 		// Google auth URL redirects back to it.
-		console.log("On the signup page...");
 		res.render('signup_form');
 		// present the new Token sign up page on app.post
 		// login_logic.presentNewTokenSignup(res);
@@ -60,6 +59,8 @@ module.exports=function(app){
 			var user = {_id: email};
 			user.salt = bytes.toString('utf8');
 			user.hash = hash(passwd, user.salt);
+			user.name.first = firstName;
+			user.name.last = lastname;
 			User.create(user, function(err, newUser){
 				if (err){
 					if(err instanceof mongoose.Error.ValidationError) {
@@ -71,6 +72,7 @@ module.exports=function(app){
 			});
 			req.session.isLoggedIn = true;
 			req.session.user = email;
+			req.session.name = firstName+' '+lastName;
 			console.log('created user: %s',email);
 			return signupGoogle.presentNewTokenSignup(res);
 		});

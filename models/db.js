@@ -48,3 +48,4 @@ process.on('SIGINT', function() {
 
 // Include my models here
 require('./userModel.js');
+module.exports.connection = mongoose.connection;

@@ -1,4 +1,8 @@
-
+{{#extend "layoutPartial"}}
+{{#content "loggedIn"}}
+	<li><a href="/login">Login</a></li>
+{{/content}}
+{{#content "mainbody"}}
     <!--=== Search Block ===-->
     <div class="search-block parallaxBg">
         <div class="container">
@@ -82,3 +86,5 @@
         </ul>
     </div><!--/container-->
     <!--=== Container Part ===-->
+    {{/content}}
+    {{/extend}}

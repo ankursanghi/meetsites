@@ -47,7 +47,7 @@ function storeMediaStream (app){
 	});
 //	var upload = multer({dest: './uploads'});
 	app.get('/imgUpload', function(req, res, next){
-		res.render('imgUpload');
+		res.render('imgUpload', {layout: false, name: req.session.name});
 	});
 
 	app.post('/imgUpload', upload.array('photos', 10), function(req, res, next){

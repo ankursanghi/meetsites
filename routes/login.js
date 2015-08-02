@@ -12,6 +12,14 @@ var opts = {
 };
 
 module.exports=function(app, checkIfVenueExists){
+	app.get('/logout', function(req, res,next){
+		delete req.session.user;
+		delete req.session.name;
+		req.session.isLoggedIn = false;
+		delete req.session.isLoggedIn;
+		req.session.destroy();
+		res.render('index', {layout:false});
+	});
 	// Login page here
 	app.get('/login', function(req, res){ 
 		// Call a function to get redirect URL to authorize user's Google credentials
@@ -20,7 +28,11 @@ module.exports=function(app, checkIfVenueExists){
 		// This authorization URL already has a redirect URL passed into it
 		// Google auth URL redirects back to it.
 		console.log("On the login page...");
-		res.render('login_form');
+		if (req.session.isLoggedIn) {
+			res.render('hostprofile', {name:req.session.name, layout: false});
+		}else{
+			res.render('login_form');
+		}
 		// present the new Token sign up page on app.post
 		// login_logic.presentNewTokenSignup(res);
 	});
@@ -51,9 +63,10 @@ module.exports=function(app, checkIfVenueExists){
 					console.log("use.hash: "+user.hash);
 					req.session.isLoggedIn = true;
 					req.session.user = email;
+					req.session.name = user.name.first+' '+user.name.last;
 					checkIfVenueExists(req,res,next).then(function(venue){
-						res.writeHead(301, {Location: '/dashboard'});
-						res.end();
+//						res.writeHead(301, {Location: '/hostprofile'});
+						res.render('hostprofile', {name:req.session.name, layout: false});
 					}, function(err){
 						console.log('error from checkIfExists'+err);
 						res.writeHead(301, {Location: '/venue'});

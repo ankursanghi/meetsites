@@ -12,6 +12,10 @@ var venue_route = require('./routes/manage_venues.js');
 var paginateHelper = require('express-handlebars-paginate');
 var util = require('util');
 var mediaManager = require('./routes/manage_media.js');
+var session = require('express-session');
+var MongoStore = require('connect-mongo')(session);
+var layouts = require('handlebars-layouts');
+var fs = require('fs');
 
 var db = require('./models/db.js');
 
@@ -21,7 +25,14 @@ app.set('port', process.env.PORT || 8888);
 // use cookie parser for cookie secret
 app.use(require('cookie-parser')(credentials.cookieSecret));
 // use the express session as the memory store. Using persistent db is a better way. This is just to learn the topic
-app.use(require('express-session')());
+// app.use(require('express-session')());
+app.use(session({
+	    store: new MongoStore({ mongooseConnection: db.connection}),
+	    secret:credentials.cookieSecret,
+	    resave:false,
+	    saveUninitialized:false
+
+}));
 
 // To use forms use express body parser that parses incoming requests
 app.use(bodyParser());
@@ -37,11 +48,31 @@ var handlebars = hbs.create({ defaultLayout:'meetsites_new',
 							var result = "<a href=/host_detail?_id=" + url + ">";
 
 							return new handlebars.handlebars.SafeString(result);
-						}
+						},
+				        section: function(name, options){
+						     if(!this._sections) this._sections = {};
+						     this._sections[name] = options.fn(this);
+						     return null;
+					 }
 				}
 		  });
-console.log('hbs is:'+util.inspect(hbs.ExpressHandlebars,false, null));
+//console.log('hbs is:'+util.inspect(hbs.ExpressHandlebars,false, null));
+// ------------------------ loading partials here explicity with handlebars -----------------------
+var partialsDir = __dirname + '/views/partials';
+var filenames = fs.readdirSync(partialsDir);
 
+filenames.forEach(function (filename) {
+	var matches = /^([^.]+).handlebars$/.exec(filename);
+	  if (!matches) {
+		      return;
+		        }
+	  var name = matches[1];
+	  var template = fs.readFileSync(partialsDir + '/' + filename, 'utf8');
+	  handlebars.handlebars.registerPartial(name, template);
+});
+// This generates an object containing the layout helpers and registers them with handlebars
+layouts.register(handlebars.handlebars);
+// ------------------------------------- loading partials end ------------------------------------
 app.engine('handlebars', handlebars.engine);
 app.set('view engine', 'handlebars');
 //
@@ -71,6 +102,8 @@ app.use(function(req, res, next) {
 	next();
 });
 
+// console.log('partials loaded? See:'+JSON.stringify(handlebars.handlebars.partials));
+
 app.get('/', function(req, res){
 	// The reason response.items cannot be pulled out of the googleCalendar quickStart js is because the scope of the 
 	// variables in node is limited to the module.
@@ -79,7 +112,7 @@ app.get('/', function(req, res){
 	// the getCalEvents
 	// this is also a great way to pass parameters to the api by parsing out the req body (on post) or parameters (on get)
 	// res.render('landingpage');
-	 res.render('index');
+	 res.render('index', {layout: false});
 	//	googleCalendar.getCalEvents(res).then(function(response){
 	//		res.cookie('signed_monster', 'nom nom', { signed: true });	
 	//		res.locals.partials.calResponse = response.items;
@@ -157,8 +190,8 @@ app.get('/home', function(req, res, next){
 });
 app.get('/browse', function(req,res, next){
 	venue_route.fetchVenues(req, res, next).then(function(venuesResult){
-		console.log('returned results... totalRows:'+venuesResult.itemCount);
-		console.log('returned results... pageCount:'+venuesResult.pageCount);
+//		console.log('returned results... totalRows:'+venuesResult.itemCount);
+//		console.log('returned results... pageCount:'+venuesResult.pageCount);
 		console.log(venuesResult.result);
 		res.locals.partials.venues = venuesResult.result;
 		res.render('search_result', {search_obj: {pagination: {page:req.query.page || 1, limit:5, totalRows:venuesResult.itemCount},
@@ -176,6 +209,9 @@ app.post('/browse', function(req,res, next){
 
 mediaManager.storeMediaStream(app);
 
+app.get('/host_detail', function(req,res,next){
+	res.render('hostDetails');
+});
 app.get('/javascript_test', function(req,res,next){
 	mediaManager.listBuckets();
 	res.render('javascript_test', { layout: false});
