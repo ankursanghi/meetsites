@@ -1,0 +1,164 @@
+{{#extend "layoutPartial"}}
+{{#section 'head'}}
+<link rel="stylesheet" href="assets/plugins/revolution-slider/rs-plugin/css/settings.css" type="text/css" media="screen">
+<link rel="stylesheet" href="assets/plugins/fancybox/source/jquery.fancybox.css">
+{{#content "loggedIn"}}
+{{name}}
+{{/content}}
+{{/section}}
+{{#content "mainbody"}}
+<div class="container content profile">
+	<div class="row">
+		{{> profileLeftSidebar}}
+		<div class="col-md-9">
+			<div class="profile-body">
+				{{#if updatesuccess}}
+				<div class="alert alert-success fade in">
+					<strong>Venue Details updated!</strong> Great job in keeping the details up to date.
+				</div>
+				{{/if}}
+
+				<form role="form" method="POST" class="sky-form" id="hostsettings">
+					<header> Your venue details here. </header>
+					<fieldset>
+						<section>
+						<label class="label">Choose a venue</label>
+						<label class="select">
+							<select id="venues" name="venues">
+								<option value="pickone">Choose venue to Update or Add a new one</option>
+							</select>
+						</label>
+						</section>
+						<section id="addnewvenuesection">
+						</section>
+						<div class="row">
+						<section class="col col-3">
+							<label class"label">Hourly Rate
+							<input type="text" name="hourlyrate" id="hourlyrate">
+							</label>
+						</section>
+						</div>
+						<section>
+						<label class="label">Purposes the venue can be used for</label>
+						<label for="kids" class="checkbox-inline">
+							<input type="checkbox" name="use4kids" id="use4kids" value="true" {{#if use4kids}} checked {{/if}}>Kids events
+						</label>
+						<label for="parties" class="checkbox-inline">
+							<input type="checkbox" name="use4party" id="use4party" value="true" {{#if use4party}} checked {{/if}} >Parties
+						</label>
+						<label for="corporate" class="checkbox-inline">
+							<input type="checkbox" name="use4corp" id="use4corp" value="true" {{#if use4corp}} checked {{/if}}>Corporate events
+						</label>
+						</section>
+						<section>
+						<label for="addressline1">Address line 1:</label>
+						<input type="text" class="form-control" id="addressline1" name="addressline1" >
+						</section>
+						<section>
+						<label for="addressline2">Address line 2:</label>
+						<input type="text" class="form-control" id="addressline2" name="addressline2">
+						</section>
+						<div class="row">
+							<section class="col col-4">
+							<label for="city"> City:
+								<input type="text" class="form-control" id="city" name="city">
+							</label>
+							</section>
+							<section class="col col-2">
+							<label for="state"> State:
+								<input type="text" class="form-control" id="state" name="state">
+							</label>
+							</section>
+							<section class="col col-2">
+							<label for="zip"> Zip:
+								<input type="text" class="form-control" id="zip" name="zip">
+							</label>
+							</section>
+						</div>
+						<section>
+						<p>Ameneties</p>
+						<label for="wifi" class="checkbox-inline">
+							<input type="checkbox" name="wifi" id="wifi" value="true">WiFi
+						</label>
+						<label for="coffee" class="checkbox-inline">
+							<input type="checkbox" name="coffee" id="coffee" value="true">Coffee
+						</label>
+						<label for="posteventcleaning" class="checkbox-inline">
+							<input type="checkbox" name="posteventcleaning" id="posteventcleaning" value="true">Post Event Cleaning
+						</label>
+						</section>
+						<section>
+						<label class="label">Venue Description</label>
+						<label class="textarea textarea-resizable">
+							<textarea name="venuedetail" id="venuedetail" rows="3"> {{venue_detail}} </textarea>
+						</label>
+						</section>
+					</fieldset>
+					<footer>
+					<button type="submit" id="submitbutton" class="btn btn-default pull-right">Update</button>
+					</footer>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+{{/content}}
+{{#content "scripts" mode="append"}}
+<script src="assets/plugins/sky-forms-pro/skyforms/js/jquery.validate.min.js"></script>						
+<script type="text/javascript" src="assets/js/plugins/validation.js"></script>						
+<script>
+	var dataURL='/fetchVenues';
+	$( document ).ready(function(){
+		App.init();
+		Validation.initValidation();
+		$.ajax({
+			dataType: "json",
+			url: dataURL,
+			success: function(data){
+				//			alert("venue object:"+JSON.stringify(data));
+				$.each(data, function(arrayID, venueObj){
+					var divData = '<option value='+'"'+venueObj.venueName+'">'+venueObj.venueName+'</option>';
+					$(divData).appendTo("#venues");
+				});
+				var addNew ='<option value="add">Add a new Venue</option>';
+				$(addNew).appendTo("#venues");
+			}
+		});
+	});
+	$("#venues").change(function(){
+		if ($("#venues").val() == "add"){
+			var newVenueField = '<label id="newvenuelabel" class="label">Pick a new unique name for venue</label>';
+			newVenueField += '<input type="text" class="form-control" id="venuename" name="venuename" >'
+			$(newVenueField).appendTo("#addnewvenuesection");
+			$("#submitbutton").text('Submit');			
+		}else{
+			$("#submitbutton").text('Update');			
+			$("input#venuename").remove();
+			$("#newvenuelabel").remove();
+			var encodedVenueName = encodeURIComponent($("#venues").val());
+			$.ajax({
+				dataType: "json",
+				url: dataURL+'?venuename='+encodedVenueName,
+				success: function(data){
+					//				alert("venue object:"+JSON.stringify(data));
+					if(data[0].uses.kids) $("#use4kids").prop('checked', true);
+					if(data[0].uses.corporate) $("#use4corp").prop('checked', true);
+					if(data[0].uses.party) $("#use4party").prop('checked', true);
+					if(data[0].ameneties.posteventcleaning) $("#posteventcleaning").prop('checked', true);
+					if(data[0].ameneties.coffee) $("#coffee").prop('checked', true);
+					if(data[0].ameneties.wifi) $("#wifi").prop('checked', true);
+					$("textarea#venuedetail").val(data[0].detaildescription);
+					$("input#addressline1").val(data[0].address.line1);
+					$("input#addressline2").val(data[0].address.line2);
+					$("input#city").val(data[0].address.city);
+					$("input#state").val(data[0].address.state);
+					$("input#zip").val(data[0].address.zip);
+					$("input#hourlyrate").val(data[0].hourlyrate);
+				}
+			});
+		}
+	});
+
+</script>
+{{/content}}
+{{/extend}}

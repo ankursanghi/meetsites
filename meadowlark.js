@@ -8,10 +8,11 @@ var signup = require('./routes/signup.js');
 var login = require('./routes/login.js');
 var storeToken = require('./routes/storeToken.js');
 var store_earlyUser= require('./routes/store_earlyUser.js');
-var venue_route = require('./routes/manage_venues.js');
+var venueManager = require('./routes/manage_venues.js');
 var paginateHelper = require('express-handlebars-paginate');
 var util = require('util');
 var mediaManager = require('./routes/manage_media.js');
+var searchManager = require('./routes/manage_search.js');
 var session = require('express-session');
 var MongoStore = require('connect-mongo')(session);
 var layouts = require('handlebars-layouts');
@@ -44,11 +45,39 @@ var handlebars = hbs.create({ defaultLayout:'meetsites_new',
 					paginateHelper: paginateHelper.createPagination,
 					hrefMaker: function(my_link, text){
 							if (my_link=='') return '';
-							var url = handlebars.handlebars.escapeExpression(my_link);
+							var url = encodeURIComponent(handlebars.handlebars.escapeExpression(my_link));
 							var result = "<a href=/host_detail?_id=" + url + ">";
-
 							return new handlebars.handlebars.SafeString(result);
 						},
+    // imgLinkMaker is used in hostdetails page
+					imgLinkMaker: function(image){
+							if (image =='') return '';
+						//	var url = encodeURIComponent(handlebars.handlebars.escapeExpression(image));
+							var result = '<img src="' + image + '" alt="slidebg1" data-bgfit="cover" data-bgposition="center center" data-bgrepeat="no-repeat">';
+							return new handlebars.handlebars.SafeString(result);
+						},
+    					imgHrefMakerHostDetail: function(imglocation, image){
+							      if(imglocation=='' || image =='') return '';
+							      var result = '<a data-fancybox-type="image" href="'+imglocation+image+'" rel="gallery" class="fancybox img-hover-v1" title="'+image+'">';
+							      return new handlebars.handlebars.SafeString(result);
+					      },
+					imgTagMakerHostDetail: function(imglocation, image){
+							      if(imglocation=='' || image =='') return '';
+							      var result = '<img class="img-responsive" src="'+imglocation+image+'" alt="">';
+							      return new handlebars.handlebars.SafeString(result);
+					      },
+					imgTagMakerSearchRes: function(imglocation, image, options){
+							      if(imglocation=='' || image =='') return '';
+							      var result = '<img ';
+							      var attributes =[];
+							      for (var attributeName in options.hash) {
+								   attributes.push(attributeName + '="' + options.hash[attributeName] + '"');
+							      }
+							      var otherParms = attributes.join(' '); 
+							      result += otherParms+'" src="'+imglocation+image+'" alt="">';
+							      console.log('new imgTagmaker:'+result);
+							      return new handlebars.handlebars.SafeString(result);
+					      },
 				        section: function(name, options){
 						     if(!this._sections) this._sections = {};
 						     this._sections[name] = options.fn(this);
@@ -144,7 +173,7 @@ signup(app); // when the user fills out the form, they are presented with a page
 // do a redirect here to profile page
 app.get('/oauth2callback', function(req, res, next){ 
 	storeToken(req, res, connectString).then(function (doc){
-		venue_route.checkIfExists(req,res,next).then(function(venue){
+		venueManager.checkIfExists(req,res,next).then(function(venue){
 			res.writeHead(301, {Location: '/hostprofile'});
 			res.end();
 		},
@@ -161,15 +190,35 @@ app.get('/venue',function(req,res, next){
 	res.render('venue-form');
 });
 app.post('/venue', function(req,res,next){
-	venue_route.storeVenue(req).then(function(doc){
+	venueManager.storeVenue(req).then(function(doc){
 		res.writeHead(301, {Location: '/hostprofile'});
 		res.end();
 	});
 });
+app.get('/fetchVenues', function(req,res,next){
+	venueManager.fetchVenues(req, res, next).then(function(venuesResult){
+		var resultObj = venuesResult.result;
+		var returnObj =[];
+		// the same api returns the JSON for venue detail if req.query.venuename is populated
+		// fetchVenues function already looks at the req.query.venuename and fetches details of the specified venue
+		if (req.query.venuename){
+			res.json(resultObj);
+		}else{
+			resultObj.forEach(function(elem, idx){
+				returnObj.push({"venueName":elem._id});	
+			});
+			res.json(returnObj);
+		}
+	});
+});
 // Log in to the main application here
-// pass in the callback of venue_route.checkIfExists to see if there is a venue.
+// pass in the callback of venueManager.checkIfExists to see if there is a venue.
 // the login route will check 
-login(app,venue_route.checkIfExists);
+login(app,venueManager.checkIfExists);
+
+//route to manage search
+searchManager(app);
+
 // Printing stringified JSON
 app.get('/dashboard', function(req, res){ 
 	// TODO - add the logic to pick out the right mongoose connection string (prod or dev) and the session user-email
@@ -188,29 +237,34 @@ app.get('/about', function(req, res){
 app.get('/home', function(req, res, next){
 	res.render('home');
 });
-app.get('/browse', function(req,res, next){
-	venue_route.fetchVenues(req, res, next).then(function(venuesResult){
-//		console.log('returned results... totalRows:'+venuesResult.itemCount);
-//		console.log('returned results... pageCount:'+venuesResult.pageCount);
-		console.log(venuesResult.result);
-		res.locals.partials.venues = venuesResult.result;
-		res.render('search_result', {search_obj: {pagination: {page:req.query.page || 1, limit:5, totalRows:venuesResult.itemCount},
-						          my_link: {url:'/host_details?id='}
-		}});
-	});
-});
 
-app.post('/browse', function(req,res, next){
-	venue_route.fetchVenues(req, res, next).then(function(venues){
-		res.locals.partials.venues = venues;
-		res.render('search_result');
-	});
-});
-
+// route to store media to Amazon AWS
 mediaManager.storeMediaStream(app);
 
 app.get('/host_detail', function(req,res,next){
-	res.render('hostDetails');
+	venueManager.fetchVenues(req,res, next).then(function(venueResult){
+		console.log('results from single venue fetch...'+JSON.stringify(venueResult));
+		var picRows = [];
+		var tempPicRow=[];
+		var counter=1;
+		var rowNum=0;
+		// get the first venue result by using index 0, then get the pictures tag and loop thru that
+		venueResult.result[0].pictures.forEach(function(pic){
+			console.log('the pic is:'+JSON.stringify(pic));
+			if(counter<3){
+				tempPicRow.push(pic);
+			}else{
+				counter=1;
+				picRows.push(tempPicRow.slice(0));
+				tempPicRow.length=0;
+				tempPicRow.push(pic);
+			}
+			counter++;
+		});
+		if(tempPicRow.length >0) picRows.push(tempPicRow);
+		console.log('new array:'+JSON.stringify(picRows));
+		res.render('hostDetails', {layout: false, pictures:picRows, details:venueResult.result[0]});
+	})
 });
 app.get('/javascript_test', function(req,res,next){
 	mediaManager.listBuckets();

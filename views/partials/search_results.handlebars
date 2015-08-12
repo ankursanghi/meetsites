@@ -1,11 +1,13 @@
-<div class="pagination-top">
-	{{{paginateHelper search_obj.pagination}}}
+<div class="pagination-top"> {{{paginateHelper search_obj.pagination}}}
 </div>
 {{#each partials.venues}}
 <div class="list-product-description product-description-brd margin-bottom-30">
 	<div class="row">
 		<div class="col-sm-4">
-			{{{hrefMaker _id _id}}}<img class="img-responsive sm-margin-bottom-20" src="img/gaba.jpg" alt=""></a>
+			{{{hrefMaker _id _id}}}
+			{{#if pictures}}
+			{{{imgTagMakerSearchRes pictures.0.imagelocation pictures.0.name class='img-responsive sm-margin-bottom-20' }}} 
+			{{/if}}
 		</div> 
 		<div class="col-sm-8 product-description">
 			<div class="overflow-h margin-bottom-5">
@@ -23,10 +25,9 @@
 					</li>
 				</ul>    
 				<div class="margin-bottom-10">
-					<span class="title-price margin-right-10">$60.00</span>
-					<span class="title-price line-through">$95.00</span>
+					<span class="title-price margin-right-10">${{hourlyrate}} per hour</span>
 				</div>    
-				<p class="margin-bottom-20">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas sollicitudin erat nec ornarevolu tpat. Etiam ut felis nec nisl eleifend lobortis. Aenean nibh est, hendrerit non conva.</p>
+				<p class="margin-bottom-20"> {{detaildescription}} </p>
 				<ul class="list-inline add-to-wishlist margin-bottom-20">
 					<li class="wishlist-in">
 					<i class="fa fa-heart"></i>

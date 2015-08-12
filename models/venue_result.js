@@ -1,5 +1,6 @@
 var mongoose = require('mongoose');
 var mongoosePaginate = require('mongoose-paginate');
+var images = require('../models/image_model.js');
 
 var venue_schema = mongoose.Schema({
 	_id: {type: String, lowercase: true, trim: true},
@@ -12,6 +13,7 @@ var venue_schema = mongoose.Schema({
     	address: {line1: String,
 		  line2: String,
     		  city: String,
+    		  state: String,
     		  zip: String,
 	},
     	phone: [String],
@@ -20,7 +22,9 @@ var venue_schema = mongoose.Schema({
     		   coffee: Boolean,
     		   posteventcleaning: Boolean,
 	},
-	pic_locations: [String]
+        pictures : [{type: mongoose.Schema.Types.ObjectId, ref: 'images'}],
+	detaildescription: {type: String},
+	hourlyrate: {type: Number}
 });
 venue_schema.plugin(mongoosePaginate);
 

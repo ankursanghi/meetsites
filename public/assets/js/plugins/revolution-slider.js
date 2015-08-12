@@ -35,7 +35,26 @@ var RevolutionSlider = function () {
 	                fullScreenOffsetContainer: ".header"
 	            });
 	        });
-        }        
+        },
+		
+    //Revolution Slider - Full Screen
+    initRSfullScreen: function() {
+      var revapi;
+      jQuery(document).ready(function() {
+        revapi = jQuery('.fullscreenbanner').revolution(
+          {
+            delay: 50,
+            startwidth: 1170,
+            startheight: 500,
+            hideThumbs: 10,
+            fullWidth: "on",
+            fullScreen: "on",
+            hideCaptionAtLimit: "",
+            navigationStyle: "preview4",
+            fullScreenOffsetContainer: ""
+          });
+      });
+    }
 
     };
 }();        

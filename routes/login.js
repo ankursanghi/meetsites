@@ -4,6 +4,7 @@ var User = require('../models/userModel.js');
 var credentials = require('../credentials.js'); // to learn to use sessions
 var crypto = require('crypto');
 var hash = require('../helpers/hash.js');
+var venueManager = require('./manage_venues.js');
 
 var opts = {
 	server : {
@@ -21,7 +22,7 @@ module.exports=function(app, checkIfVenueExists){
 		res.render('index', {layout:false});
 	});
 	// Login page here
-	app.get('/login', function(req, res){ 
+	app.get('/login', function(req, res, next){ 
 		// Call a function to get redirect URL to authorize user's Google credentials
 		//	googleCalendar.getRedirURL(res).then(function(url){
 		// Use the 301 redirect to send to the authorization URL
@@ -37,6 +38,28 @@ module.exports=function(app, checkIfVenueExists){
 		// login_logic.presentNewTokenSignup(res);
 	});
 
+	// venue details and ameneties - update
+	app.get('/hostDetail_settings', function(req, res, next){
+		if (req.session.isLoggedIn){
+			venueManager.fetchVenues(req, res, next).then(function(venueResult){
+				res.render('hostDetail_settings', {name:req.session.name, 
+				       				   layout: false});
+			});
+		}else{
+			res.render('login_form');
+		}
+	});
+
+	app.post('/hostDetail_settings', function(req, res, next){
+		if (req.session.isLoggedIn){
+			venueManager.storeVenue(req,res,next).then(function(doc){
+				console.log('saved the venue here:'+JSON.stringify(doc));
+				res.render('hostDetail_settings', {name: req.session.name, updatesuccess: true, layout: false});
+			});
+		}else{
+			res.render('login_form');
+		}
+	});
 	//create a new account
 	app.post('/login', function(req,res,next){
 		var email = req.body.email;
