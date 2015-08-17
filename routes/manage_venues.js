@@ -72,6 +72,7 @@ function storeVenue(req,res,next){
 		venue.ameneties.posteventcleaning = req.body.posteventcleaning || false;
 		venue.detaildescription = req.body.venuedetail;
 		venue.hourlyrate = Number(req.body.hourlyrate);
+		venue.calendarID = req.body.calendarid;
 		Venue.findOneAndUpdate(query, venue , options, function(err, doc){
 			if (err){
 				console.log("received an error while updating/inserting the venue"+err);
@@ -130,7 +131,7 @@ function fetchVenues(req, res, next){
 		console.log('adding user to the query:'+req.session.user);
 		myQuery.where('host_email').equals(req.session.user);
 	}
-	var selectcols = '_id address uses ameneties pictures detaildescription hourlyrate';
+	var selectcols = '_id host_email address uses ameneties pictures detaildescription hourlyrate calendarID';
 	myQuery.select(selectcols);
 	//Venue.paginate(myQuery, function(error, pageCount,paginatedResults, itemCount){
 	console.log('here to fetch venues...');
@@ -140,19 +141,10 @@ function fetchVenues(req, res, next){
 			deferred.reject(error);
 		}else {
 			console.log('pages:'+pageCount);
+			// it is here that I want to insert a function to call googleAPI to check for availability
 			deferred.resolve({result:paginatedResults,pageCount:pageCount,itemCount:itemCount});
 		}
 	} );
-//	myQuery.exec(function(err, venues){
-//		if (err){
-//			deferred.reject(err);
-//		}else {
-//			console.log("Venues: "+venues);
-//			deferred.resolve(venues);
-//		}
-//	});
-	//}
-
 	return deferred.promise;
 }
 exports.checkIfExists= check_if_exists;

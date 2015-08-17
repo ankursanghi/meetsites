@@ -3,6 +3,7 @@
 var mongoose = require('mongoose');
 // use the mongoose model in the application
 var User = require('./models/userModel.js');
+var async = require('async');
 
 var signupGoogle = require('./signupGoogle.js');
 var fs = require('fs');
@@ -38,11 +39,6 @@ function authorize(credentials, req, res, connectString) {
 	var auth = new googleAuth();
 	var oauth2Client = new auth.OAuth2(clientId, clientSecret, redirectUrl);
 
-//	mongoose.connect(connectString, opts, function(err){
-//		if (err){ console.log("Hey! MongoDB connection failed");} else {
-//			console.log("Hey! MongoDB connection successful!");}
-//	});
-
 	// Check if we have previously stored a token.
 	// TODO - this file read needs to be replaced with a mongo query
 //	fs.readFile(TOKEN_PATH, function(err, token) {
@@ -64,6 +60,20 @@ function authorize(credentials, req, res, connectString) {
 	return deferred.promise;
 }
 
+function authorizeRegular (credentials,token) {
+	var deferred = Q.defer();
+	var clientSecret = credentials.web.client_secret;
+	var clientId = credentials.web.client_id;
+	var redirectUrl = credentials.web.redirect_uris[0];
+	var auth = new googleAuth();
+	var oauth2Client = new auth.OAuth2(clientId, clientSecret, redirectUrl);
+	
+	console.log('token retrieved from param:'+token);
+	if (token=="") deferred.reject("no token");
+	oauth2Client.credentials = token;
+	deferred.resolve(oauth2Client);
+	return deferred.promise;
+}
 /**
  * Get and store new token after prompting for user authorization, and then
  * execute the given callback with the authorized OAuth2 client.
@@ -153,7 +163,6 @@ function getEvents(auth) {
 		});
 	return deferred.promise; // return a promise
 }
-
 // this function is the one exported
 // it gets the request object, response object, and the mongoDB connect string
 // and returns the response of Google Calendar API call to get Events on the calendar.
@@ -180,5 +189,112 @@ function getCalEvents(req, res, connectString) {
 	});
 	return deferred.promise;
 }
+
+
+// this function will check availability on the primary calendar
+function getAvail(auth, dateTimeRange, calID) {
+	console.log('auth:'+JSON.stringify(auth));
+	console.log('date Time Range :'+(dateTimeRange.start).toISOString()+' --->'+(dateTimeRange.end).toISOString());
+	console.log('calendar id to check freebusy:'+calID);
+	var deferred = Q.defer(); // get a new deferral
+	calendar.freebusy.query({
+		auth: auth,
+		headers: { "content-type" : "application/json" },
+		resource:{items: [{"id" : calID}],
+			  timeMin: (dateTimeRange.start).toISOString(),
+			  timeMax: (dateTimeRange.end).toISOString()
+			}
+	}, function(err, response) {
+			console.log('Response from the Calendar service: ' + JSON.stringify(response));
+			if (err) {
+				console.log('There was an error contacting the Calendar service: ' + err);
+				deferred.reject(); // deferred reject here
+				return;
+			}
+			var events = response.calendars[calID].busy;
+			if (events.length == 0) {
+				console.log('No upcoming events found.');
+			} else {
+				console.log('busy in here...');
+			}
+			deferred.resolve(response); // deferred resolve here
+		});
+	return deferred.promise; // return a promise
+}
+function checkAvailFunc (clientSecret, token, dateTimeRange, gCalID) {
+	// Load client secrets from a local file.
+	// Authorize a client with the loaded credentials, then call the Calendar API.
+	console.log('checkAvailFunc called with\n');
+	console.log('client secret:'+clientSecret);
+	console.log('token:'+token);
+	console.log('dateTimeRange:'+JSON.stringify(dateTimeRange));
+	console.log('Calendar ID:'+gCalID);
+	authorizeRegular(clientSecret, token).then(
+		function(oauth2Client) { 
+			getAvail(oauth2Client, dateTimeRange, gCalID).then(
+			function(response){
+				return response;	
+			}, function(err){
+				console.log('error inside checkAvailFunc...');
+			})
+		}, function (err){
+			console.log('error inside checkAvailFunc from authorizeRegular');
+		});
+}
+// this is my example code to make an array of anonymous functions
+// given a list of venue results and a check availability function, this will return an array of anonymous functions
+// that could do this availability check with google
+
+function getToken(email){
+	var deferred = Q.defer();
+
+	User.findById(email, function(err, doc){
+		if (err) deferred.reject(err);
+		deferred.resolve(doc.token);
+	});
+	return deferred.promise;
+}
+
+function createFunc (clientSecret, token, dateTimeRange, gCalID){
+
+	var temp_func = function(callback){
+		var tempRes = checkAvailFunc(clientSecret, token, dateTimeRange, gCalID);
+		callback(null, tempRes);
+	}
+	console.log('returning from createFunc:'+temp_func);
+	return temp_func;
+}
+
+function makeArrayOfFunctions(venueList, dateTimeRange, nextFunc){
+	var funcArray=[];
+	var temp_func;
+	var numVenues = venueList.length;
+	if (numVenues === 0) return funcArray;
+
+	fs.readFile('client_secret_oAuth.json', function processClientSecrets(err, content) {
+		if (err) {
+			console.log('Error loading client secret file: ' + err);
+			deferred.reject(err);
+			return;
+		}
+		var clientSecret = JSON.parse(content);
+		async.forEach(venueList, function(venue, next){
+			console.log('each venue:'+JSON.stringify(venue._id));
+			getToken(venue.host_email).then(function(token){
+				temp_func = createFunc(clientSecret, token, dateTimeRange, venue.calendarID); 
+				funcArray.push(temp_func);
+				if(--numVenues === 0) {
+					nextFunc(funcArray);
+				}
+			});
+			next();
+		}, function(err){ // this is called if an error happens or when the async.forEach loop finishes.
+			          // it couldn't have the nextFunc call because the funcArray is not available outside 
+			console.log('iterating done');
+		});
+	});
+}
 //getCalEvents();
 exports.getCalEvents = getCalEvents;
+exports.checkAvailFunc = checkAvailFunc;
+exports.makeArrayOfFunctions = makeArrayOfFunctions;

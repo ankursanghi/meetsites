@@ -57,10 +57,11 @@ module.exports=function(app){
 		crypto.randomBytes(16, function(err, bytes){
 			if (err) return next(err);
 			var user = {_id: email};
+			user.name = {};
 			user.salt = bytes.toString('utf8');
 			user.hash = hash(passwd, user.salt);
 			user.name.first = firstName;
-			user.name.last = lastname;
+			user.name.last = lastName;
 			User.create(user, function(err, newUser){
 				if (err){
 					if(err instanceof mongoose.Error.ValidationError) {

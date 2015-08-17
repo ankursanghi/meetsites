@@ -24,7 +24,8 @@ var venue_schema = mongoose.Schema({
 	},
         pictures : [{type: mongoose.Schema.Types.ObjectId, ref: 'images'}],
 	detaildescription: {type: String},
-	hourlyrate: {type: Number}
+	hourlyrate: {type: Number},
+	calendarID: {type: String}
 });
 venue_schema.plugin(mongoosePaginate);
 

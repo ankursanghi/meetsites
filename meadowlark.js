@@ -17,6 +17,7 @@ var session = require('express-session');
 var MongoStore = require('connect-mongo')(session);
 var layouts = require('handlebars-layouts');
 var fs = require('fs');
+var async = require('async');
 
 var db = require('./models/db.js');
 
@@ -195,6 +196,8 @@ app.post('/venue', function(req,res,next){
 		res.end();
 	});
 });
+
+// API to serve the AJAX request from UI
 app.get('/fetchVenues', function(req,res,next){
 	venueManager.fetchVenues(req, res, next).then(function(venuesResult){
 		var resultObj = venuesResult.result;
@@ -267,7 +270,32 @@ app.get('/host_detail', function(req,res,next){
 	})
 });
 app.get('/javascript_test', function(req,res,next){
-	mediaManager.listBuckets();
+	// fetch the venues from database, then call makeArrayofFunctions 
+	// to get a list of functions for each of the venues on the list
+	var dateTimeRange = {};
+	dateTimeRange.start = new Date("August 16, 2015 00:00:00");
+	dateTimeRange.end = new Date("August 16, 2015 23:59:59");
+	venueManager.fetchVenues(req,res, next).then(function(venueResult){
+		// This loop is only going to be used for developing the functionality. TBD
+		for (var i=0;i<venueResult.result.length;i++){
+			venueResult.result[i].calendarID = 'meetsites4u@gmail.com';
+		}
+		var callback = function(funcArray){
+			console.log('executing the callback now...'+JSON.stringify(funcArray));
+			async.parallel(funcArray,
+				function(err,results){
+					if (err) return next(err);
+					console.log('results:'+JSON.stringify(results));	
+				});
+		};
+		var funcArray = googleCalendar.makeArrayOfFunctions(venueResult.result, dateTimeRange, callback);
+		console.log('array of funcs:'+funcArray[0]);
+	});
+//	var result = makeArrayOfFunctions();
+//	console.log('array of functions:'+JSON.stringify(result));
+//	result[0]();
+//	result[1]();
+//	result[2]();
 	res.render('javascript_test', { layout: false});
 });
 
@@ -286,3 +314,4 @@ app.listen(app.get('port'), function(){
 	console.log( 'Express started on http://localhost:' +
 		app.get('port') + '; press Ctrl-C to terminate.' );
 });
+

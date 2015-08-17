@@ -32,13 +32,38 @@
 				<p>{{details.detaildescription}}</p>
 			</div>
 			<div class="col-sm-4">
+				<div class="row">
+					<div class="pull-right" style="margin-top:-88px;margin-bottom:40px;padding-left:5px;padding-right:5px;position:relative;background:rgba(60,63,64,0.9);color:#fff;z-index:1001"> <h2 style="color:white">{{details.hourlyrate}}$ per hour</h2> </div>
+				</div>
 				<div class="headline"><h2>Venue Details</h2></div>
-				<ul class="list-unstyled project-details">
-					<li><strong>Client:</strong> Web Design</li>
-					<li><strong>Date:</strong> 17 October 2014</li>
-					<li><strong>Categories:</strong> <a href="#">Web Design,</a> <a href="#">Graphic</a></li>
-					<li><strong>Website:</strong> <a href="#">https://htmlstream.com</a></li>
-				</ul>
+				<div class="col-sm-6">
+					<h3>Ameneties</h3>
+					<ul class="list-unstyled project-details">
+						{{#if details.ameneties.posteventcleaning}}
+						<li><strong><i class="fa fa-check-circle-o"></i></strong> Post Event Cleaning </li>
+						{{/if}}
+						{{#if details.ameneties.coffee}}
+						<li><strong><i class="fa fa-coffee"></i></strong> Coffee </li>
+						{{/if}}
+						{{#if details.ameneties.wifi}}
+						<li><strong><i class="fa fa-wifi"></i></strong> Wifi </li>
+						{{/if}}
+					</ul>
+				</div>
+				<div class="col-sm-6">
+					<h3>Can be used for </h3>
+					<ul class="list-unstyled project-details">
+						{{#if details.uses.corporate}}
+						<li><strong><i class="fa fa-check-circle-o"></i></strong> Corporate Events</li>
+						{{/if}}
+						{{#if details.uses.kids}}
+						<li><strong><i class="fa fa-check-circle-o"></i></strong> Kids Events</li>
+						{{/if}}
+						{{#if details.uses.party}}
+						<li><strong><i class="fa fa-check-circle-o"></i></strong> Adult's Social</li>
+						{{/if}}
+					</ul>
+				</div>
 			</div>
 		</div>
     <!-- Two Columns -->
