@@ -7,7 +7,8 @@ var FormSliders = function () {
 	        // Regular slider
 	        $('#slider1').slider({
 		      min: 0,
-		      max: 500,
+		      max: 10,
+		      value: 2,
 		      slide: function(event, ui)
 		      {
 		        $('#slider1-value').text(ui.value);

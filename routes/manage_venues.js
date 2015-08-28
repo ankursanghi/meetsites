@@ -72,7 +72,7 @@ function storeVenue(req,res,next){
 		venue.ameneties.posteventcleaning = req.body.posteventcleaning || false;
 		venue.detaildescription = req.body.venuedetail;
 		venue.hourlyrate = Number(req.body.hourlyrate);
-		venue.calendarID = req.body.calendarid;
+		venue.calendarID = req.body.gcalendars;
 		Venue.findOneAndUpdate(query, venue , options, function(err, doc){
 			if (err){
 				console.log("received an error while updating/inserting the venue"+err);
@@ -108,39 +108,46 @@ function fetchVenues(req, res, next){
 	// if (req.session.isLoggedIn){
 		// build the query using the parameters passed from the search box
 		// if nothing is passed, just grab everything and pass it on
-	console.log('req.query present?:'+JSON.stringify(req.query._id));
+	console.log('req body in fetchVenues --->:'+JSON.stringify(req.body));
 	console.log('req.query venuename?:'+JSON.stringify(req.query._id));
 	var myQuery = Venue.find({});
 	
 	// if a specific venue was searched from the search form on the browse page`
-	if(req.body.venuename){
-		myQuery.where('_id').equals(req.body.venuename);
+	if(req.body.venuename ){
+		myQuery = myQuery.where('_id').equals(req.body.venuename);
 	}
+
 	// the venue name field is called venues on the venue manager form on Host Profile settings page
 	if(req.query.venuename){
 		console.log(req.query.venuename+' is the venue we got');
-		myQuery.where('_id').equals(req.query.venuename);
+		myQuery = myQuery.where('_id').equals(req.query.venuename);
 	}
 
 	// if coming in from host detail page, get only that specific venue
 	if(req.path == '/host_detail'){
 		console.log('adding '+req.query._id+'to the query');
-		myQuery.where('_id').equals(req.query._id);
+		myQuery = myQuery.where('_id').equals(req.query._id);
 	}
 	if(req.session.user && (!(req.path.indexOf('browse')>-1))){
 		console.log('adding user to the query:'+req.session.user);
-		myQuery.where('host_email').equals(req.session.user);
+		myQuery = myQuery.where('host_email').equals(req.session.user);
+	}
+	// if a Zip or City or State was entered, add that to the query - utilizing the fact that req.body is only available from Search page.
+	if (req.body.where){
+		console.log('adding the or class for address zip, city or state');
+		myQuery.or([{'address.zip': req.body.where}, {'address.city': req.body.where}, {'address.state': req.body.where}]);
+//		myQuery = myQuery.where('address.city').equals(req.body.where);
 	}
 	var selectcols = '_id host_email address uses ameneties pictures detaildescription hourlyrate calendarID';
 	myQuery.select(selectcols);
 	//Venue.paginate(myQuery, function(error, pageCount,paginatedResults, itemCount){
-	console.log('here to fetch venues...');
 	Venue.paginate(myQuery, { page: req.query.page, limit: 5, columns: selectcols, populate: 'pictures'}, function(error, paginatedResults, pageCount, itemCount){
 		if (error){
 			console.error('error ho gaya...');
 			deferred.reject(error);
 		}else {
 			console.log('pages:'+pageCount);
+			console.log('results:'+paginatedResults);
 			// it is here that I want to insert a function to call googleAPI to check for availability
 			deferred.resolve({result:paginatedResults,pageCount:pageCount,itemCount:itemCount});
 		}

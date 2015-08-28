@@ -22,14 +22,22 @@
 					<header> Your venue details here. </header>
 					<fieldset>
 						<section>
-						<label class="label">Choose a venue</label>
-						<label class="select">
-							<select id="venues" name="venues">
-								<option value="pickone">Choose venue to Update or Add a new one</option>
-							</select>
-						</label>
+							<label class="label">Choose a venue</label>
+							<label class="select">
+								<select id="venues" name="venues">
+									<option value="pickone">Choose venue to Update or Add a new one</option>
+								</select>
+							</label>
 						</section>
 						<section id="addnewvenuesection">
+						</section>
+						<section>
+							<label class="label">Add a Calendar to associate with venue</label>
+							<label class="select">
+								<select id="gcalendars" name="gcalendars">
+									<option value="pickone">Pick a calendar</option>
+								</select>
+							</label>
 						</section>
 						<div class="row">
 						<section class="col col-3">
@@ -107,13 +115,13 @@
 <script src="assets/plugins/sky-forms-pro/skyforms/js/jquery.validate.min.js"></script>						
 <script type="text/javascript" src="assets/js/plugins/validation.js"></script>						
 <script>
-	var dataURL='/fetchVenues';
 	$( document ).ready(function(){
+		var dataURL='/api/json';
 		App.init();
 		Validation.initValidation();
 		$.ajax({
 			dataType: "json",
-			url: dataURL,
+			url: dataURL+'/venues',
 			success: function(data){
 				//			alert("venue object:"+JSON.stringify(data));
 				$.each(data, function(arrayID, venueObj){
@@ -124,8 +132,20 @@
 				$(addNew).appendTo("#venues");
 			}
 		});
+		$.ajax({
+			dataType: "json",
+			url: dataURL+'/gCalendars',
+			success: function(data){
+				$.each(data, function(arrayID, calObj){
+					// alert("Calendar :"+arrayID+" - "+JSON.stringify(calObj.summary));
+					var divData = '<option value='+'"'+calObj.id+'">'+calObj.summary+'</option>';
+					$(divData).appendTo("#gcalendars");
+				});
+			}
+		});
 	});
 	$("#venues").change(function(){
+		var dataURL='/api/json';
 		if ($("#venues").val() == "add"){
 			var newVenueField = '<label id="newvenuelabel" class="label">Pick a new unique name for venue</label>';
 			newVenueField += '<input type="text" class="form-control" id="venuename" name="venuename" >'
@@ -138,9 +158,26 @@
 			var encodedVenueName = encodeURIComponent($("#venues").val());
 			$.ajax({
 				dataType: "json",
-				url: dataURL+'?venuename='+encodedVenueName,
+				url: dataURL+'/venues?venuename='+encodedVenueName,
 				success: function(data){
 					//				alert("venue object:"+JSON.stringify(data));
+					$('#gcalendars').empty();
+					$.ajax({
+						dataType: "json",
+						url: dataURL+'/gCalendars',
+						success: function(inData){
+							var divPickOne = '<option value="pickone">Pick a calendar</option>';
+							$(divPickOne).appendTo("#gcalendars");
+							$.each(inData, function(arrayID, calObj){
+								// alert("Calendar :"+arrayID+" - "+JSON.stringify(calObj.summary));
+								var divData = '<option value="'+calObj.id+'"';
+								if(data[0].calendarID == calObj.id) divData += ' selected';
+								divData += '>'+calObj.summary+'</option>';
+								$(divData).appendTo("#gcalendars");
+							});
+						}
+					});
+
 					if(data[0].uses.kids) $("#use4kids").prop('checked', true);
 					if(data[0].uses.corporate) $("#use4corp").prop('checked', true);
 					if(data[0].uses.party) $("#use4party").prop('checked', true);

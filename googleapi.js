@@ -221,6 +221,20 @@ function getAvail(auth, dateTimeRange, calID) {
 		});
 	return deferred.promise; // return a promise
 }
+
+function getGCalendarList(auth, callback){
+	calendar.calendarList.list({
+		auth: auth
+	}, function(err, response){
+		console.log('Response from the Calendar service: ' + JSON.stringify(response.items));
+		if (err) {
+			console.log('There was an error contacting the Calendar service: ' + err);
+			return;
+		}
+		var itemList = response.items;
+		callback(itemList);
+	});
+}
 function checkAvailFunc (clientSecret, token, dateTimeRange, gCalID) {
 	// Load client secrets from a local file.
 	// Authorize a client with the loaded credentials, then call the Calendar API.
@@ -294,7 +308,32 @@ function makeArrayOfFunctions(venueList, dateTimeRange, nextFunc){
 		});
 	});
 }
+
+function getCalendarList(req, res, next){
+	if (req.session.isLoggedIn){
+		fs.readFile('client_secret_oAuth.json', function processClientSecrets(err, content) {
+			if (err) {
+				console.log('Error loading client secret file: ' + err);
+				deferred.reject(err);
+				return;
+			}
+			var clientSecret = JSON.parse(content);
+			// user email is in req.session.user				
+			getToken(req.session.user).then(function(token){
+				authorizeRegular(clientSecret, token).then(function(oauth2Client) { 
+					getGCalendarList(oauth2Client,function(calendarList){
+						console.log('getting here before res.json...'+calendarList);
+						res.json(calendarList);
+					});
+				});
+			});
+		});
+	} else{
+		next();
+	}	
+}
 //getCalEvents();
 exports.getCalEvents = getCalEvents;
-exports.checkAvailFunc = checkAvailFunc;
+exports.checkAvailFunc = checkAvailFunc; // TBD - is this function really called anywhere?
 exports.makeArrayOfFunctions = makeArrayOfFunctions;
+exports.getCalendarList= getCalendarList;

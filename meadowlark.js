@@ -1,6 +1,5 @@
 var express = require('express');
 var fortune = require('./lib/fortune.js');
-var googleCalendar = require('./googleapi.js');
 var Q = require('q'); // Get Q to manage asynch calls. Callback hell is no fun!!
 var credentials = require('./credentials.js'); // to learn to use sessions
 var bodyParser = require('body-parser');
@@ -8,16 +7,18 @@ var signup = require('./routes/signup.js');
 var login = require('./routes/login.js');
 var storeToken = require('./routes/storeToken.js');
 var store_earlyUser= require('./routes/store_earlyUser.js');
-var venueManager = require('./routes/manage_venues.js');
 var paginateHelper = require('express-handlebars-paginate');
 var util = require('util');
+var venueManager = require('./routes/manage_venues.js');
 var mediaManager = require('./routes/manage_media.js');
 var searchManager = require('./routes/manage_search.js');
+var googleCalendar = require('./googleapi.js');
 var session = require('express-session');
 var MongoStore = require('connect-mongo')(session);
 var layouts = require('handlebars-layouts');
 var fs = require('fs');
 var async = require('async');
+var jsonApi = require('./jsonApi.js');
 
 var db = require('./models/db.js');
 
@@ -126,6 +127,7 @@ app.use(function(req, res, next){
 next();
 });
 
+
 // middleware to insert partial in the response object
 app.use(function(req, res, next) {
 	if(!res.locals.partials) res.locals.partials = {}; 
@@ -133,6 +135,10 @@ app.use(function(req, res, next) {
 });
 
 // console.log('partials loaded? See:'+JSON.stringify(handlebars.handlebars.partials));
+var apiRouter = express.Router();
+app.use('/api/json', apiRouter);
+//route to manage jsonApis
+jsonApi(apiRouter);
 
 app.get('/', function(req, res){
 	// The reason response.items cannot be pulled out of the googleCalendar quickStart js is because the scope of the 
@@ -181,7 +187,7 @@ app.get('/oauth2callback', function(req, res, next){
 		// IF the function below is being called, it means that venue has not been stored for this user yet.
 		function(err){
 			console.log('error from checkIfExists'+err);
-			res.writeHead(301, {Location: '/venue'});
+			res.writeHead(301, {Location: '/hostDetail_settings'});
 			res.end();
 		});
 	});
@@ -197,23 +203,7 @@ app.post('/venue', function(req,res,next){
 	});
 });
 
-// API to serve the AJAX request from UI
-app.get('/fetchVenues', function(req,res,next){
-	venueManager.fetchVenues(req, res, next).then(function(venuesResult){
-		var resultObj = venuesResult.result;
-		var returnObj =[];
-		// the same api returns the JSON for venue detail if req.query.venuename is populated
-		// fetchVenues function already looks at the req.query.venuename and fetches details of the specified venue
-		if (req.query.venuename){
-			res.json(resultObj);
-		}else{
-			resultObj.forEach(function(elem, idx){
-				returnObj.push({"venueName":elem._id});	
-			});
-			res.json(returnObj);
-		}
-	});
-});
+
 // Log in to the main application here
 // pass in the callback of venueManager.checkIfExists to see if there is a venue.
 // the login route will check 
@@ -221,6 +211,7 @@ login(app,venueManager.checkIfExists);
 
 //route to manage search
 searchManager(app);
+
 
 // Printing stringified JSON
 app.get('/dashboard', function(req, res){ 
@@ -270,33 +261,31 @@ app.get('/host_detail', function(req,res,next){
 	})
 });
 app.get('/javascript_test', function(req,res,next){
+// -------  this is the sample code for freebusy
 	// fetch the venues from database, then call makeArrayofFunctions 
 	// to get a list of functions for each of the venues on the list
-	var dateTimeRange = {};
-	dateTimeRange.start = new Date("August 16, 2015 00:00:00");
-	dateTimeRange.end = new Date("August 16, 2015 23:59:59");
-	venueManager.fetchVenues(req,res, next).then(function(venueResult){
-		// This loop is only going to be used for developing the functionality. TBD
-		for (var i=0;i<venueResult.result.length;i++){
-			venueResult.result[i].calendarID = 'meetsites4u@gmail.com';
-		}
-		var callback = function(funcArray){
-			console.log('executing the callback now...'+JSON.stringify(funcArray));
-			async.parallel(funcArray,
-				function(err,results){
-					if (err) return next(err);
-					console.log('results:'+JSON.stringify(results));	
-				});
-		};
-		var funcArray = googleCalendar.makeArrayOfFunctions(venueResult.result, dateTimeRange, callback);
-		console.log('array of funcs:'+funcArray[0]);
-	});
-//	var result = makeArrayOfFunctions();
-//	console.log('array of functions:'+JSON.stringify(result));
-//	result[0]();
-//	result[1]();
-//	result[2]();
-	res.render('javascript_test', { layout: false});
+//	var dateTimeRange = {};
+//	dateTimeRange.start = new Date("August 16, 2015 00:00:00");
+//	dateTimeRange.end = new Date("August 16, 2015 23:59:59");
+//	venueManager.fetchVenues(req,res, next).then(function(venueResult){
+//		// This loop is only going to be used for developing the functionality. TBD
+//		for (var i=0;i<venueResult.result.length;i++){
+//			venueResult.result[i].calendarID = 'meetsites4u@gmail.com';
+//		}
+//		var callback = function(funcArray){
+//			console.log('executing the callback now...'+JSON.stringify(funcArray));
+//			async.parallel(funcArray,
+//				function(err,results){
+//					if (err) return next(err);
+//					console.log('results:'+JSON.stringify(results));	
+//				});
+//		};
+//		var funcArray = googleCalendar.makeArrayOfFunctions(venueResult.result, dateTimeRange, callback);
+//		console.log('array of funcs:'+funcArray[0]);
+//	});
+// -------  this is the sample code for freebusy
+	googleCalendar.getCalendarList(req, res, next);
+	// res.render('javascript_test', { layout: false});
 });
 
 app.use(function(req, res,next){ 
