@@ -1,0 +1,55 @@
+{{#extend "layoutPartial"}}
+{{#section 'head'}}
+{{#content "loggedIn"}}
+{{#if name}}
+	<li><a href="/login">{{name}}</a></li>
+{{else}}
+	<li><a href="/login">Login</a></li>
+{{/if}}
+{{/content}}
+<link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/fullcalendar/2.4.0/fullcalendar.min.css">
+
+{{/section}}
+{{#content "mainbody"}}
+    <div class="row">
+	    <div class="col-md-6 md-margin-bottom-20">
+		    <div id='calendar'></div>
+	    </div>
+    </div>
+{{/content}}
+{{#content "scripts" mode="append"}}
+<script src="assets/plugins/calendar/lib/moment.min.js"></script>
+<script src="assets/plugins/calendar/js/fullcalendar.min.js"></script>
+<script>
+    jQuery(document).ready(function() {
+
+		$('#calendar').fullCalendar({
+			header: {
+				left: 'prev,next today',
+				center: 'title',
+				right: 'month,agendaWeek,agendaDay'
+			},
+			defaultDate: '2015-02-12',
+			defaultView: 'agendaDay',
+			editable: true,
+			eventLimit: true, // allow "more" link when too many events
+			events: [
+				{
+					title: 'Dinner',
+					start: '2015-02-12T20:00:00'
+				},
+				{
+					title: 'Birthday Party',
+					start: '2015-02-13T07:00:00'
+				},
+				{
+					title: 'Click for Google',
+					url: 'http://google.com/',
+					start: '2015-02-28'
+				}
+			]
+		});
+    });
+</script>
+{{/content}}
+{{/extend}}
