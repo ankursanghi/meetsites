@@ -3,7 +3,7 @@ var mongoosePaginate = require('mongoose-paginate');
 var images = require('../models/image_model.js');
 
 var venue_schema = mongoose.Schema({
-	_id: {type: String, lowercase: true, trim: true},
+	name: {type: String, lowercase: true, trim: true},
     	host_email: {type: String},
     	uses: {
 		kids:Boolean,

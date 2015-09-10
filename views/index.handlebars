@@ -1,6 +1,10 @@
 {{#extend "layoutPartial"}}
 {{#content "loggedIn"}}
+{{#if name}}
+	<li><a href="/login">{{name}}</a></li>
+{{else}}
 	<li><a href="/login">Login</a></li>
+{{/if}}
 {{/content}}
 {{#content "mainbody"}}
     <!--=== Search Block ===-->

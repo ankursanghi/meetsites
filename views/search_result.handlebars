@@ -6,7 +6,7 @@
 <!--[if lt IE 9]><link rel="stylesheet" href="assets/plugins/sky-forms-pro/skyforms/css/sky-forms-ie8.css"><![endif]-->
 {{#content "loggedIn"}}
 {{#if name}}
-	{{name}} 
+	<a href="/login">{{name}}</a>
 {{else}}
 	<li><a href="/login">Login</a></li>
 {{/if}}
@@ -30,7 +30,7 @@
 						<section class="col col-4">
 						<label class="label">When do you need it?</label>
 						<div id="datetimepicker2" class="input-group"> 
-							<input name="whenstart" class="form-control" data-format="MM/dd/yyyy HH:mm:ss PP" type="text" value={{whenstart}}></input>	
+							<input name="whenstart" id="whenstart" class="form-control" data-format="MM/dd/yyyy HH:mm:ss PP" type="text" value='{{whenstart}}'></input>	
 							<span class="add-on input-group-btn">
 								<button class="btn btn-u" type="button">
 								<i data-time-icon="fa fa-clock-o" data-date-icon="fa fa-calendar"> </i>

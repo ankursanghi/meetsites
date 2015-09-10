@@ -205,7 +205,7 @@ function getAvail(auth, dateTimeRange, calID) {
 			  timeMax: (dateTimeRange.end).toISOString()
 			}
 	}, function(err, response) {
-			console.log('Response from the Calendar service: ' + JSON.stringify(response));
+//			console.log('Response from the Calendar service: ' + JSON.stringify(response));
 			if (err) {
 				console.log('There was an error contacting the Calendar service: ' + err);
 				deferred.reject(); // deferred reject here
@@ -226,7 +226,6 @@ function getGCalendarList(auth, callback){
 	calendar.calendarList.list({
 		auth: auth
 	}, function(err, response){
-		console.log('Response from the Calendar service: ' + JSON.stringify(response.items));
 		if (err) {
 			console.log('There was an error contacting the Calendar service: ' + err);
 			return;
@@ -235,18 +234,22 @@ function getGCalendarList(auth, callback){
 		callback(itemList);
 	});
 }
-function checkAvailFunc (clientSecret, token, dateTimeRange, gCalID) {
+function checkAvailFunc (clientSecret, token, dateTimeRange, venue) {
 	// Load client secrets from a local file.
 	// Authorize a client with the loaded credentials, then call the Calendar API.
 	console.log('checkAvailFunc called with\n');
-	console.log('client secret:'+clientSecret);
-	console.log('token:'+token);
 	console.log('dateTimeRange:'+JSON.stringify(dateTimeRange));
-	console.log('Calendar ID:'+gCalID);
+	console.log('Calendar ID:'+venue.calendarID);
 	authorizeRegular(clientSecret, token).then(
 		function(oauth2Client) { 
-			getAvail(oauth2Client, dateTimeRange, gCalID).then(
+			getAvail(oauth2Client, dateTimeRange, venue.calendarID).then(
 			function(response){
+				console.log('Response from the Calendar service: ' + JSON.stringify(response));
+				if (response.calendars[venue.calendarID].busy.length > 0){
+					venue.available = false;
+				}else {
+					venue.available = true;
+				}
 				return response;	
 			}, function(err){
 				console.log('error inside checkAvailFunc...');
@@ -255,7 +258,6 @@ function checkAvailFunc (clientSecret, token, dateTimeRange, gCalID) {
 			console.log('error inside checkAvailFunc from authorizeRegular');
 		});
 }
-// this is my example code to make an array of anonymous functions
 // given a list of venue results and a check availability function, this will return an array of anonymous functions
 // that could do this availability check with google
 
@@ -269,20 +271,55 @@ function getToken(email){
 	return deferred.promise;
 }
 
-function createFunc (clientSecret, token, dateTimeRange, gCalID){
+function createFunc (clientSecret, token, dateTimeRange, venue){
 
 	var temp_func = function(callback){
-		var tempRes = checkAvailFunc(clientSecret, token, dateTimeRange, gCalID);
+		var tempRes = checkAvailFunc(clientSecret, token, dateTimeRange, venue); // this is an asynchronous call
+		console.log('Response after the Calendar service: ' + JSON.stringify(venue));
 		callback(null, tempRes);
 	}
-	console.log('returning from createFunc:'+temp_func);
 	return temp_func;
+}
+
+function asyncIteratorFunc (venue, cb){
+	fs.readFile('client_secret_oAuth.json', function processClientSecrets(err, content) {
+		if (err) {
+			console.log('Error loading client secret file: ' + err);
+			deferred.reject(err);
+			return;
+		}
+		var clientSecret = JSON.parse(content);
+		getToken(venue.host_email).then(function(token){
+			console.log('dateTimeRange:'+JSON.stringify(venue.dateTimeRange));
+			console.log('Calendar ID:'+venue.calendarID);
+			authorizeRegular(clientSecret, token).then(function(oauth2Client) { 
+				getAvail(oauth2Client, venue.dateTimeRange, venue.calendarID).then(function(response){
+						console.log('Response from the Calendar service: ' + JSON.stringify(response));
+						if (response.calendars[venue.calendarID].busy.length > 0){
+							console.log(' ==========> making it false for '+response.calendars[venue.calendarID].busy);
+							venue.available = false;
+						}else {
+							console.log(' ==========> making it true for '+response.calendars[venue.calendarID].busy);
+							venue.available = true;
+						}
+						// return cb(null, response.calendars[venue.calendarID].busy.length);
+						 return cb(null, venue);
+					}, function(err){
+						console.log('error inside checkAvailFunc...');
+					});
+				}, function (err){
+					console.log('error inside authorizeRegular');
+				}
+			);
+		});
+	});
 }
 
 function makeArrayOfFunctions(venueList, dateTimeRange, nextFunc){
 	var funcArray=[];
 	var temp_func;
 	var numVenues = venueList.length;
+	console.log('logging inside makeArrayOfFunctions...');
 	if (numVenues === 0) return funcArray;
 
 	fs.readFile('client_secret_oAuth.json', function processClientSecrets(err, content) {
@@ -292,11 +329,14 @@ function makeArrayOfFunctions(venueList, dateTimeRange, nextFunc){
 			return;
 		}
 		var clientSecret = JSON.parse(content);
-		async.forEach(venueList, function(venue, next){
-			console.log('each venue:'+JSON.stringify(venue._id));
+		async.map(venueList, function(venue, next){
+//			console.log('each venue:'+JSON.stringify(venue._id));
 			getToken(venue.host_email).then(function(token){
-				temp_func = createFunc(clientSecret, token, dateTimeRange, venue.calendarID); 
+				// the function to call checkAvailFunc is done in a function to protect scope for the venue 
+				// if an anonymous function was created here, all function copies will reference the same (the last one) venue.
+				temp_func = createFunc(clientSecret, token, dateTimeRange, venue); 
 				funcArray.push(temp_func);
+				// call the callback once the number of venues has reached to last
 				if(--numVenues === 0) {
 					nextFunc(funcArray);
 				}
@@ -337,3 +377,4 @@ exports.getCalEvents = getCalEvents;
 exports.checkAvailFunc = checkAvailFunc; // TBD - is this function really called anywhere?
 exports.makeArrayOfFunctions = makeArrayOfFunctions;
 exports.getCalendarList= getCalendarList;
+exports.asyncIteratorFunc = asyncIteratorFunc ;

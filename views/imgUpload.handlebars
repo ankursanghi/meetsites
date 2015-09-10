@@ -113,11 +113,11 @@
 			});
 </script>
 <script>
-	var dataURL='/fetchVenues';
+	var dataURL='/api/json';
 	$( document ).ready( function(){
 	$.ajax({
 		dataType: "json",
-		url: dataURL,
+		url: dataURL+'/venues',
 		success: function(data){
 //			alert("venue object:"+JSON.stringify(data));
 			$.each(data, function(arrayID, venueObj){

@@ -1,7 +1,11 @@
 {{#extend "layoutPartial"}}
 {{#section 'head'}}
 {{#content "loggedIn"}}
-	{{name}}
+{{#if name}}
+	<li><a href="/login">{{name}}</a></li>
+{{else}}
+	<li><a href="/login">Login</a></li>
+{{/if}}
 {{/content}}
 <!--=== Profile ===-->
 <link rel="stylesheet" href="assets/css/pages/profile.css">

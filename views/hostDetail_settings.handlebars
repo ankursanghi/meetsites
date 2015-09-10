@@ -3,7 +3,11 @@
 <link rel="stylesheet" href="assets/plugins/revolution-slider/rs-plugin/css/settings.css" type="text/css" media="screen">
 <link rel="stylesheet" href="assets/plugins/fancybox/source/jquery.fancybox.css">
 {{#content "loggedIn"}}
-{{name}}
+{{#if name}}
+	<li><a href="/login">{{name}}</a></li>
+{{else}}
+	<li><a href="/login">Login</a></li>
+{{/if}}
 {{/content}}
 {{/section}}
 {{#content "mainbody"}}

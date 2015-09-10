@@ -32,7 +32,8 @@ app.use(require('cookie-parser')(credentials.cookieSecret));
 app.use(session({
 	    store: new MongoStore({ mongooseConnection: db.connection}),
 	    secret:credentials.cookieSecret,
-	    resave:false,
+	    cookie: { maxAge: new Date(Date.now() + 360000)},
+	    resave:true,
 	    saveUninitialized:false
 
 }));
@@ -43,7 +44,8 @@ app.use(bodyParser());
 // set up handlebars view engine
 var hbs = require('express-handlebars');
 var handlebars = hbs.create({ defaultLayout:'meetsites_new',
-				helpers : {
+				helpers : 
+					{
 					paginateHelper: paginateHelper.createPagination,
 					hrefMaker: function(my_link, text){
 							if (my_link=='') return '';
@@ -77,7 +79,7 @@ var handlebars = hbs.create({ defaultLayout:'meetsites_new',
 							      }
 							      var otherParms = attributes.join(' '); 
 							      result += otherParms+'" src="'+imglocation+image+'" alt="">';
-							      console.log('new imgTagmaker:'+result);
+							      // console.log('new imgTagmaker:'+result);
 							      return new handlebars.handlebars.SafeString(result);
 					      },
 				        section: function(name, options){
@@ -124,9 +126,8 @@ app.use(express.static(__dirname + '/public'));
 app.use(function(req, res, next){
 	res.locals.showTests = app.get('env') !== 'production' &&
 	req.query.test === '1';
-next();
+	next();
 });
-
 
 // middleware to insert partial in the response object
 app.use(function(req, res, next) {
@@ -137,23 +138,21 @@ app.use(function(req, res, next) {
 // console.log('partials loaded? See:'+JSON.stringify(handlebars.handlebars.partials));
 var apiRouter = express.Router();
 app.use('/api/json', apiRouter);
+
+// Add Date function to the middleware
+app.use(function(req, res, next){
+	Date.prototype.addHours= function(h){
+	    this.setHours(this.getHours()+h);
+	    return this;
+	}
+	next();
+});
+
 //route to manage jsonApis
 jsonApi(apiRouter);
 
 app.get('/', function(req, res){
-	// The reason response.items cannot be pulled out of the googleCalendar quickStart js is because the scope of the 
-	// variables in node is limited to the module.
-	// Perhaps there is a way to use exports to fetch this variable out to this module.
-	// the way I got around this issue is by passing the res object into getCalEvents and setting the partials.calResponse in
-	// the getCalEvents
-	// this is also a great way to pass parameters to the api by parsing out the req body (on post) or parameters (on get)
-	// res.render('landingpage');
 	 res.render('index', {layout: false});
-	//	googleCalendar.getCalEvents(res).then(function(response){
-	//		res.cookie('signed_monster', 'nom nom', { signed: true });	
-	//		res.locals.partials.calResponse = response.items;
-	//		res.render('home');});
-
 });
 
 // landing page signup would be app.post on the index page
@@ -162,9 +161,6 @@ app.post('/early_signup', function(req, res, next){
 	store_earlyUser(req,res,next).then(function(newUser){
 		res.sendFile('views/ajax-response.html', {root: __dirname});
 	});
-	// TODO include an if in the index view so that the modal shows open with a thank you message when someone signs up!
-	// TODO write a store_earlyUser function
-	// TODO push this to github and to the server
 });
 app.get('/early_signup_reset', function(req, res){
 	console.log('signup reset now');
@@ -257,35 +253,15 @@ app.get('/host_detail', function(req,res,next){
 		});
 		if(tempPicRow.length >0) picRows.push(tempPicRow);
 		console.log('new array:'+JSON.stringify(picRows));
-		res.render('hostDetails', {layout: false, pictures:picRows, details:venueResult.result[0]});
+		res.render('hostDetails', {layout: false, pictures:picRows, details:venueResult.result[0], name: req.session.name});
 	})
 });
+app.get('/checkout', function(req,res,next){
+	res.render('checkout', { layout: false});
+});
+
 app.get('/javascript_test', function(req,res,next){
-// -------  this is the sample code for freebusy
-	// fetch the venues from database, then call makeArrayofFunctions 
-	// to get a list of functions for each of the venues on the list
-//	var dateTimeRange = {};
-//	dateTimeRange.start = new Date("August 16, 2015 00:00:00");
-//	dateTimeRange.end = new Date("August 16, 2015 23:59:59");
-//	venueManager.fetchVenues(req,res, next).then(function(venueResult){
-//		// This loop is only going to be used for developing the functionality. TBD
-//		for (var i=0;i<venueResult.result.length;i++){
-//			venueResult.result[i].calendarID = 'meetsites4u@gmail.com';
-//		}
-//		var callback = function(funcArray){
-//			console.log('executing the callback now...'+JSON.stringify(funcArray));
-//			async.parallel(funcArray,
-//				function(err,results){
-//					if (err) return next(err);
-//					console.log('results:'+JSON.stringify(results));	
-//				});
-//		};
-//		var funcArray = googleCalendar.makeArrayOfFunctions(venueResult.result, dateTimeRange, callback);
-//		console.log('array of funcs:'+funcArray[0]);
-//	});
-// -------  this is the sample code for freebusy
-	googleCalendar.getCalendarList(req, res, next);
-	// res.render('javascript_test', { layout: false});
+	res.render('calendar', { layout: false});
 });
 
 app.use(function(req, res,next){ 

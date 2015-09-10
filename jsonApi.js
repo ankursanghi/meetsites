@@ -4,7 +4,7 @@ var searchManager = require('./routes/manage_search.js');
 var googleCalendar = require('./googleapi.js');
 module.exports = function(app){
 	app.get('/venues', function(req, res, next){
-		console.log('inside the venues fetch...');
+//		console.log('inside the venues fetch...');
 		venueManager.fetchVenues(req, res, next).then(function(venuesResult){
 			var resultObj = venuesResult.result;
 			var returnObj =[];
@@ -14,7 +14,7 @@ module.exports = function(app){
 				res.json(resultObj);
 			}else{
 				resultObj.forEach(function(elem, idx){
-					returnObj.push({"venueName":elem._id});	
+					returnObj.push({"venueName":elem.name});	
 				});
 				res.json(returnObj);
 			}
@@ -24,5 +24,9 @@ module.exports = function(app){
 	app.get('/gCalendars', function(req,res, next){
 		console.log('inside the gCalendars fetch...');
 		googleCalendar.getCalendarList(req,res,next);
+	});
+	// get the details of a particular calendar
+	app.get('/getEvents/:calId', function(req, res, next){
+		console.log('inside getEvents with param:'+req.param.calId);
 	});
 }

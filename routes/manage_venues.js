@@ -45,11 +45,11 @@ function storeVenue(req,res,next){
 		var query = {};
 		var venue ={};
 		if (req.body.venues =="add"){
-			query = {_id: req.body.venuename};
-			venue._id = req.body.venuename;
+			query = {name: req.body.venuename};
+			venue.name = req.body.venuename;
 		}else {
-			query = {_id: req.body.venues};
-			venue._id = req.body.venues;
+			query = {$and: [{name: req.body.venues},{host_email:req.session.user}]};
+			venue.name = req.body.venues;
 		}
 		var options = {upsert: true};
 		venue.host_email = req.session.user;
@@ -88,7 +88,7 @@ function storeVenue(req,res,next){
 
 function addImagesToVenues(imageArray, venueId){
 	var deferred = Q.defer();
-	var query = {_id: venueId};
+	var query = {name: venueId};
 	var venue = {};
 	var options = {upsert: true};
 	var image='';
@@ -105,40 +105,42 @@ function addImagesToVenues(imageArray, venueId){
 
 function fetchVenues(req, res, next){
 	var deferred = Q.defer();
+	var ObjectId = require('mongoose').Types.ObjectId;
 	// if (req.session.isLoggedIn){
 		// build the query using the parameters passed from the search box
 		// if nothing is passed, just grab everything and pass it on
 	console.log('req body in fetchVenues --->:'+JSON.stringify(req.body));
-	console.log('req.query venuename?:'+JSON.stringify(req.query._id));
 	var myQuery = Venue.find({});
 	
 	// if a specific venue was searched from the search form on the browse page`
 	if(req.body.venuename ){
-		myQuery = myQuery.where('_id').equals(req.body.venuename);
+		myQuery = myQuery.where('name').equals(req.body.venuename);
 	}
 
 	// the venue name field is called venues on the venue manager form on Host Profile settings page
 	if(req.query.venuename){
-		console.log(req.query.venuename+' is the venue we got');
-		myQuery = myQuery.where('_id').equals(req.query.venuename);
+		myQuery = myQuery.where('name').equals(req.query.venuename);
 	}
 
 	// if coming in from host detail page, get only that specific venue
 	if(req.path == '/host_detail'){
-		console.log('adding '+req.query._id+'to the query');
-		myQuery = myQuery.where('_id').equals(req.query._id);
+		myQuery = myQuery.where('_id').equals(new ObjectId(req.query._id));
 	}
-	if(req.session.user && (!(req.path.indexOf('browse')>-1))){
-		console.log('adding user to the query:'+req.session.user);
-		myQuery = myQuery.where('host_email').equals(req.session.user);
+	if(req.session.user && (!(req.path.indexOf('browse')>-1))){ // if not coming in from browse page
+		if (!(req.path.indexOf('host_detail')>-1)){ // and if not coming in from host_detail page
+	//		console.log('adding user to the query:'+req.session.user);
+			myQuery = myQuery.where('host_email').equals(req.session.user);
+		}
 	}
 	// if a Zip or City or State was entered, add that to the query - utilizing the fact that req.body is only available from Search page.
 	if (req.body.where){
-		console.log('adding the or class for address zip, city or state');
 		myQuery.or([{'address.zip': req.body.where}, {'address.city': req.body.where}, {'address.state': req.body.where}]);
-//		myQuery = myQuery.where('address.city').equals(req.body.where);
 	}
-	var selectcols = '_id host_email address uses ameneties pictures detaildescription hourlyrate calendarID';
+	// if a Zip or City or State was on the session, add that to the query - utilizing the fact that req.session is only available from Search page from a search session.
+	if (req.session.searchWhere){
+		myQuery.or([{'address.zip': req.session.searchWhere}, {'address.city': req.session.searchWhere}, {'address.state': req.session.searchWhere}]);
+	}
+	var selectcols = 'name host_email address uses ameneties pictures detaildescription hourlyrate calendarID';
 	myQuery.select(selectcols);
 	//Venue.paginate(myQuery, function(error, pageCount,paginatedResults, itemCount){
 	Venue.paginate(myQuery, { page: req.query.page, limit: 5, columns: selectcols, populate: 'pictures'}, function(error, paginatedResults, pageCount, itemCount){
@@ -146,9 +148,8 @@ function fetchVenues(req, res, next){
 			console.error('error ho gaya...');
 			deferred.reject(error);
 		}else {
-			console.log('pages:'+pageCount);
-			console.log('results:'+paginatedResults);
-			// it is here that I want to insert a function to call googleAPI to check for availability
+//			console.log('pages:'+pageCount);
+//			console.log('results:'+paginatedResults);
 			deferred.resolve({result:paginatedResults,pageCount:pageCount,itemCount:itemCount});
 		}
 	} );
