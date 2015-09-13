@@ -33,8 +33,8 @@ app.use(session({
 	    store: new MongoStore({ mongooseConnection: db.connection}),
 	    secret:credentials.cookieSecret,
 	    cookie: { maxAge: new Date(Date.now() + 360000)},
-	    resave:true,
-	    saveUninitialized:false
+	    resave:false,
+	    saveUninitialized:true
 
 }));
 
@@ -177,7 +177,7 @@ signup(app); // when the user fills out the form, they are presented with a page
 app.get('/oauth2callback', function(req, res, next){ 
 	storeToken(req, res, connectString).then(function (doc){
 		venueManager.checkIfExists(req,res,next).then(function(venue){
-			res.writeHead(301, {Location: '/hostprofile'});
+			res.writeHead(301, {Location: '/hostDetail_settings'});
 			res.end();
 		},
 		// IF the function below is being called, it means that venue has not been stored for this user yet.

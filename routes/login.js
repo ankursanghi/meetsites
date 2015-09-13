@@ -92,7 +92,7 @@ module.exports=function(app, checkIfVenueExists){
 						res.render('hostprofile', {name:req.session.name, layout: false});
 					}, function(err){
 						console.log('error from checkIfExists'+err);
-						res.writeHead(301, {Location: '/venue'});
+						res.writeHead(301, {Location: '/hostDetail_settings'});
 						res.end();
 					});
 //					res.writeHead(301, {Location: '/dashboard'});

@@ -66,9 +66,16 @@ module.exports = function(app){
 	});
 
 	app.post('/browse', function(req,res, next){
+		delete req.session.searchWhere;
+		delete req.session.searchWhenStart;
+		delete req.session.searchDuration;
+		console.log('deleted all search session variables...');
 		req.session.searchWhere = req.body.where;
 		req.session.searchWhenStart = req.body.whenstart;
 		req.session.searchDuration = req.body.duration;
+		console.log('reset search where:'+req.session.searchWhere);
+		console.log('reset search whenStart:'+req.session.searchWhenStart);
+		console.log('reset search Duration:'+req.session.searchDuration);
 		venueManager.fetchVenues(req, res, next).then(function(venuesResult){
 			// --- this piece of code just limits the description to first 140 characters ----
 			var tempString='';
@@ -96,29 +103,40 @@ module.exports = function(app){
 			endDateTimeJS.setTime(startDateTimeJS.getTime()+req.body.duration*60*60*1000);
 			dateTimeRange.end = endDateTimeJS;
 			console.log('free busy end date time:'+dateTimeRange.end);
-
-			for (var i=0; i<venuesResult.result.length; i++){
-				venuesResult.result[i].dateTimeRange = dateTimeRange;
-			}
-			var asyncIterator = googleCalendar.asyncIteratorFunc;
-			async.map(venuesResult.result,asyncIterator, function (err, results){
-//				console.log('results after iterator call:'+results);
-				for (var k=results.length-1; k>=0; k -= 1){ // a reverse loop is needed because splice re-indexes the array from current point to end of array.
-					if (!(results[k].available)){
-						countSkip++;
-						results.splice(k,1);
-					}
+			if (dateTimeRange.start == 'Invalid Date' || dateTimeRange.end == 'Invalid Date'){
+					res.locals.partials.venues = venuesResult.result;
+					var perPageLimit = 5;
+					res.render('search_result', {search_obj: 
+									{pagination: {page:req.query.page || 1, limit:perPageLimit, totalRows:venuesResult.itemCount} },
+								    	 where: req.body.where,
+								    	 whenstart: String(req.body.whenstart),
+								    	 duration: req.body.duration, 
+									 layout: false,
+					});
+			}else{
+				for (var i=0; i<venuesResult.result.length; i++){
+					venuesResult.result[i].dateTimeRange = dateTimeRange;
 				}
-				res.locals.partials.venues = results;
-				var perPageLimit = 5;
-				var pageSkipped = Math.floor(countSkip / perPageLimit) || 0;
-				res.render('search_result', {search_obj: {pagination: {page:req.query.page-pageSkipped || 1, limit:perPageLimit, totalRows:venuesResult.itemCount-countSkip} },
-							    where: req.body.where,
-							    whenstart: String(req.body.whenstart),
-							    duration: req.body.duration, 
-								layout: false,
-				});
-			});	
+				var asyncIterator = googleCalendar.asyncIteratorFunc;
+				async.map(venuesResult.result,asyncIterator, function (err, results){
+	//				console.log('results after iterator call:'+results);
+					for (var k=results.length-1; k>=0; k -= 1){ // a reverse loop is needed because splice re-indexes the array from current point to end of array.
+						if (!(results[k].available)){
+							countSkip++;
+							results.splice(k,1);
+						}
+					}
+					res.locals.partials.venues = results;
+					var perPageLimit = 5;
+					var pageSkipped = Math.floor(countSkip / perPageLimit) || 0;
+					res.render('search_result', {search_obj: {pagination: {page:req.query.page-pageSkipped || 1, limit:perPageLimit, totalRows:venuesResult.itemCount-countSkip} },
+								    where: req.body.where,
+								    whenstart: String(req.body.whenstart),
+								    duration: req.body.duration, 
+									layout: false,
+					});
+				});	
+			}
 		});
 	});
 }
